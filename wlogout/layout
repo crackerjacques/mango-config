@@ -1,27 +1,27 @@
 {
     "label" : "logout",
     "action" : "mmsg dispatch quit",
-    "text" : " Logout  ",
+    "text" : "Logout",
     "keybind" : "m"
 }
 
 {
     "label" : "shutdown",
     "action" : "shutdown -h now",
-    "text" : "Shutdown ",
+    "text" : "Shutdown",
     "keybind" : "d"
 }
 
 {
     "label" : "reboot",
     "action" : "reboot",
-    "text" : " Reboot  ",
+    "text" : "Reboot",
     "keybind" : "r"
 }
 
 {
     "label" : "suspend",
     "action" : "systemctl suspend",
-    "text" : " Suspend ",
+    "text" : "Suspend",
     "keybind" : "s"
 }
