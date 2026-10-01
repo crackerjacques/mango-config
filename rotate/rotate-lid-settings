@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+# RG Rotate: choose what closing the lid does.
+#
+# The choice goes to ~/.config/rotate-lid and is acted on by rotate-lid. The
+# first time round it also installs a logind drop-in that makes logind ignore
+# the lid, since otherwise logind suspends regardless of the choice here.
+#
+# Driven by touch or by the pad through rotate-pad2key: up/down move between
+# the choices, A (Enter) picks one, B (Esc) closes.
+import os
+import subprocess
+import tkinter as tk
+
+CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"),
+                    "rotate-lid")
+DROPIN = "/etc/systemd/logind.conf.d/50-rotate-lid.conf"
+SETUP = ("mkdir -p /etc/systemd/logind.conf.d && "
+         "printf '[Login]\\nHandleLidSwitch=ignore\\nHandleLidSwitchExternalPower=ignore\\n"
+         "HandleLidSwitchDocked=ignore\\n' >" + DROPIN + " && "
+         "systemctl reload systemd-logind")
+
+MODES = [("none", "Do nothing"), ("off", "Screen off"), ("sleep", "Sleep")]
+
+BG, FG, HL, DIM = "#201b14", "#d1b88e", "#ac9259", "#888888"
+FONT = ("Hack", -28)
+
+
+def current():
+    try:
+        with open(CONF) as f:
+            mode = f.read().strip()
+    except OSError:
+        mode = ""
+    return mode if mode in dict(MODES) else "none"
+
+
+def ensure_logind():
+    if not os.path.exists(DROPIN):
+        # Needs root once; sudo in a terminal so the password can be typed on wvkbd.
+        subprocess.run(["foot", "-e", "sudo", "sh", "-c", SETUP])
+    return os.path.exists(DROPIN)
+
+
+def apply():
+    mode = choice.get()
+    os.makedirs(os.path.dirname(CONF), exist_ok=True)
+    with open(CONF, "w") as f:
+        f.write(mode + "\n")
+    label = dict(MODES)[mode]
+    if ensure_logind():
+        status.config(text=f"Saved: {label}", fg=FG)
+    else:
+        status.config(text=f"Saved: {label}\nlogind still handles the lid (setup not done)",
+                      fg="#ef2929")
+
+
+def move(step):
+    i = buttons.index(root.focus_get()) if root.focus_get() in buttons else 0
+    buttons[(i + step) % len(buttons)].focus_set()
+
+
+root = tk.Tk()
+root.title("Lid Settings")
+root.configure(bg=BG, padx=24, pady=24)
+
+tk.Label(root, text="When the lid closes", font=FONT, bg=BG, fg=DIM).pack(anchor="w", pady=(0, 16))
+
+choice = tk.StringVar(value=current())
+buttons = []
+for mode, label in MODES:
+    b = tk.Radiobutton(root, text=label, value=mode, variable=choice, command=apply,
+                       indicatoron=False, font=FONT, width=16, pady=16,
+                       bg=BG, fg=FG, selectcolor=HL, activebackground=HL,
+                       highlightthickness=4, highlightcolor=FG, highlightbackground=BG,
+                       relief="flat", bd=0)
+    b.pack(fill="x", pady=6)
+    b.bind("<Return>", lambda e: e.widget.invoke())
+    buttons.append(b)
+
+status = tk.Label(root, text="", font=FONT, bg=BG, fg=FG, justify="left", wraplength=600)
+status.pack(anchor="w", pady=(16, 0))
+
+root.bind("<Up>", lambda e: move(-1))
+root.bind("<Down>", lambda e: move(1))
+root.bind("<Escape>", lambda e: root.destroy())
+
+buttons[[m for m, _ in MODES].index(choice.get())].focus_set()
+root.mainloop()

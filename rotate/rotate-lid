@@ -1,0 +1,19 @@
+#!/bin/bash
+# RG Rotate: lid switch handler, run by the switchbind lines in bind.conf.
+#
+# What closing the lid does is picked with rotate-lid-settings and kept in
+# ~/.config/rotate-lid: none, off (panel power only) or sleep. logind must
+# be told to ignore the lid (rotate-lid-settings sets that up), otherwise it
+# suspends on its own before this ever runs.
+
+OUTPUT=DSI-1
+
+mode=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/rotate-lid" 2>/dev/null)
+
+case "$1:${mode:-none}" in
+	fold:off)	mmsg dispatch "sleep_monitor,$OUTPUT" ;;
+	fold:sleep)	systemctl suspend ;;
+	# Always wake the panel on open - harmless if it was never put to sleep,
+	# and it covers a mode change made while the lid was shut.
+	unfold:*)	mmsg dispatch "wakeup_monitor,$OUTPUT" ;;
+esac
