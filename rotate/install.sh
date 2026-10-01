@@ -4,7 +4,7 @@
 set -e
 cd "$(dirname "$0")"
 
-install -m 755 rotate-pad2key rotate-lid rotate-lid-settings /usr/bin/
+install -m 755 rotate-pad2key rotate-lid rotate-lid-settings rotate-logout /usr/bin/
 install -m 644 rotate-lid-settings.desktop /usr/share/applications/
 
 # A short press on the power key opens the logout menu (bind.conf) instead of

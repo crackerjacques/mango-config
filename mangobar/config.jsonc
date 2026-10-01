@@ -121,7 +121,7 @@
     },
     "custom/power": {
         "format": "󰣇",
-        "on-click": "wlogout -C ~/.config/mango/wlogout/style.css -l ~/.config/mango/wlogout/layout -b 1 -T 180 -B 180 -L 180 -R 180 -r 12 --protocol layer-shell",
+        "on-click": "rotate-logout",
         "on-click-right": "sleep 0.1s && swaync-client -t -sw"
     },
     "custom/clock": {
