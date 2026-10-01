@@ -3,4 +3,4 @@
 # (bind.conf) and the mangobar power icon; running it again closes the menu.
 pkill -x wlogout && exit 0
 exec wlogout -C ~/.config/mango/wlogout/style.css -l ~/.config/mango/wlogout/layout \
-	-b 1 -T 180 -B 180 -L 180 -R 180 -r 12 --protocol layer-shell
+	-b 1 -T 170 -B 190 -L 200 -R 160 -r 12 --protocol layer-shell
