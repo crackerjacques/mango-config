@@ -2,10 +2,13 @@
 # RG Rotate: gamepad buttons -> keyboard keys (evdev/uinput, X11/Wayland-safe).
 #
 # mango variant of the bsp's /usr/bin/rotate-pad2key - install it over that
-# file and the existing rotate-pad2key.service runs it unchanged. The only
-# difference is L1/R1: here they send Super+PageUp / Super+PageDown so that
-# bind.conf can hang wvkbd and foot on them without taking plain PageUp and
-# PageDown away from wvkbd or a real keyboard.
+# file and the existing rotate-pad2key.service runs it unchanged. What differs:
+#  - L1/R1 send Super+PageUp / Super+PageDown, so that bind.conf can hang
+#    wvkbd and foot on them without taking plain PageUp and PageDown away
+#    from wvkbd or a real keyboard.
+#  - L2/R2 send Super+Left / Super+Right, mango's tag (desktop) switch.
+#    Tab moves to THUMBR, which the bsp version leaves unused; Shift+Tab is
+#    dropped.
 #
 # There is no keyboard on this board and no broken-out UART, so without this
 # the desktop cannot be driven at all once X is up - the touchscreen alone
@@ -36,13 +39,14 @@ MAP = {
     e.BTN_WEST:   e.KEY_HOME,
     e.BTN_SELECT: e.KEY_SPACE,
     e.BTN_START:  e.KEY_LEFTMETA,
-    e.BTN_TL2:    e.KEY_TAB,
+    e.BTN_THUMBR: e.KEY_TAB,
 }
 
 COMBO = {
     e.BTN_MODE:   (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
-    e.BTN_TR2:    (e.KEY_LEFTSHIFT, e.KEY_TAB),
+    e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFT),
+    e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_RIGHT),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
     e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
 }

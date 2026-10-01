@@ -1,11 +1,4 @@
 {
-    "label" : "lock",
-    "action" : "swaylock -f -c 000000 &",
-    "text" : "  Lock   ",
-    "keybind" : "l"
-}
-
-{
     "label" : "logout",
     "action" : "mmsg dispatch quit",
     "text" : " Logout  ",
@@ -31,11 +24,4 @@
     "action" : "systemctl suspend",
     "text" : " Suspend ",
     "keybind" : "s"
-}
-
-{
-    "label" : "hibernate",
-    "action" : "systemctl hibernate",
-    "text" : "Hibernate",
-    "keybind" : "h"
 }

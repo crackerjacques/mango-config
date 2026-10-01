@@ -5,11 +5,16 @@
 # first time round it also installs a logind drop-in that makes logind ignore
 # the lid, since otherwise logind suspends regardless of the choice here.
 #
-# Driven by touch or by the pad through rotate-pad2key: up/down move between
-# the choices, A (Enter) picks one, B (Esc) closes.
+# GTK 4: it talks Wayland directly (Tk would need Xwayland) and its
+# introspection data is what the image already carries. Driven by touch or by
+# the pad through rotate-pad2key: up/down move between the choices, A (Enter)
+# picks one, B (Esc) closes.
 import os
 import subprocess
-import tkinter as tk
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, GLib, Gtk
 
 CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"),
                     "rotate-lid")
@@ -21,8 +26,19 @@ SETUP = ("mkdir -p /etc/systemd/logind.conf.d && "
 
 MODES = [("none", "Do nothing"), ("off", "Screen off"), ("sleep", "Sleep")]
 
-BG, FG, HL, DIM = "#201b14", "#d1b88e", "#ac9259", "#888888"
-FONT = ("Hack", -28)
+CSS = """
+window { background: #201b14; }
+label { color: #d1b88e; font-family: Hack; font-size: 28px; }
+label.dim { color: #888888; }
+label.err { color: #ef2929; }
+button {
+    background: #201b14; background-image: none; box-shadow: none;
+    border: 4px solid #201b14; border-radius: 10px; padding: 16px;
+}
+button:checked { background: #ac9259; }
+button:checked label { color: #201b14; }
+button:focus { border-color: #d1b88e; }
+"""
 
 
 def current():
@@ -34,55 +50,92 @@ def current():
     return mode if mode in dict(MODES) else "none"
 
 
-def ensure_logind():
-    if not os.path.exists(DROPIN):
-        # Needs root once; sudo in a terminal so the password can be typed on wvkbd.
-        subprocess.run(["foot", "-e", "sudo", "sh", "-c", SETUP])
-    return os.path.exists(DROPIN)
-
-
-def apply():
-    mode = choice.get()
-    os.makedirs(os.path.dirname(CONF), exist_ok=True)
-    with open(CONF, "w") as f:
-        f.write(mode + "\n")
-    label = dict(MODES)[mode]
-    if ensure_logind():
-        status.config(text=f"Saved: {label}", fg=FG)
+def load_css():
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+        provider.load_from_string(CSS)
     else:
-        status.config(text=f"Saved: {label}\nlogind still handles the lid (setup not done)",
-                      fg="#ef2929")
+        provider.load_from_data(CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
 
-def move(step):
-    i = buttons.index(root.focus_get()) if root.focus_get() in buttons else 0
-    buttons[(i + step) % len(buttons)].focus_set()
+class LidSettings(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Lid Settings")
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
+                      margin_top=24, margin_bottom=24, margin_start=24, margin_end=24)
+        self.set_child(box)
+
+        head = Gtk.Label(label="When the lid closes", xalign=0)
+        head.add_css_class("dim")
+        box.append(head)
+
+        cur = current()
+        group = None
+        focus = None
+        for mode, label in MODES:
+            b = Gtk.ToggleButton(label=label)
+            if group:
+                b.set_group(group)
+            group = group or b
+            b.set_active(mode == cur)
+            b.connect("toggled", self.on_toggled, mode)
+            box.append(b)
+            if mode == cur:
+                focus = b
+
+        self.status = Gtk.Label(xalign=0, wrap=True)
+        box.append(self.status)
+
+        self.present()
+        focus.grab_focus()
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+    def on_toggled(self, button, mode):
+        if not button.get_active():
+            return
+        os.makedirs(os.path.dirname(CONF), exist_ok=True)
+        with open(CONF, "w") as f:
+            f.write(mode + "\n")
+        self.label = dict(MODES)[mode]
+        if os.path.exists(DROPIN):
+            self.report()
+            return
+        # Needs root once; sudo in a terminal so the password can be typed on
+        # wvkbd. Watched, not waited on, so the window keeps redrawing.
+        self.say(f"Saved: {self.label}\nSetting up logind…")
+        p = subprocess.Popen(["foot", "-e", "sudo", "sh", "-c", SETUP])
+        GLib.child_watch_add(GLib.PRIORITY_DEFAULT, p.pid, lambda *a: self.report())
+
+    def report(self):
+        if os.path.exists(DROPIN):
+            self.say(f"Saved: {self.label}")
+        else:
+            self.say(f"Saved: {self.label}\nlogind still handles the lid (setup not done)", "err")
+
+    def say(self, text, cls=None):
+        self.status.remove_css_class("err")
+        if cls:
+            self.status.add_css_class(cls)
+        self.status.set_text(text)
 
 
-root = tk.Tk()
-root.title("Lid Settings")
-root.configure(bg=BG, padx=24, pady=24)
+def on_activate(app):
+    load_css()
+    LidSettings(app)
 
-tk.Label(root, text="When the lid closes", font=FONT, bg=BG, fg=DIM).pack(anchor="w", pady=(0, 16))
 
-choice = tk.StringVar(value=current())
-buttons = []
-for mode, label in MODES:
-    b = tk.Radiobutton(root, text=label, value=mode, variable=choice, command=apply,
-                       indicatoron=False, font=FONT, width=16, pady=16,
-                       bg=BG, fg=FG, selectcolor=HL, activebackground=HL,
-                       highlightthickness=4, highlightcolor=FG, highlightbackground=BG,
-                       relief="flat", bd=0)
-    b.pack(fill="x", pady=6)
-    b.bind("<Return>", lambda e: e.widget.invoke())
-    buttons.append(b)
-
-status = tk.Label(root, text="", font=FONT, bg=BG, fg=FG, justify="left", wraplength=600)
-status.pack(anchor="w", pady=(16, 0))
-
-root.bind("<Up>", lambda e: move(-1))
-root.bind("<Down>", lambda e: move(1))
-root.bind("<Escape>", lambda e: root.destroy())
-
-buttons[[m for m, _ in MODES].index(choice.get())].focus_set()
-root.mainloop()
+app = Gtk.Application(application_id="org.armbian.RotateLidSettings")
+app.connect("activate", on_activate)
+app.run(None)
