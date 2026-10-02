@@ -3,7 +3,7 @@
 # the bsp's /usr/bin/rgds-pad2key. install.sh puts it over that file and the
 # existing rgds-pad2key.service runs it unchanged.
 #  - L1/R1: Super+PageUp / Super+PageDown (wvkbd / foot in bind.conf)
-#  - L2/R2: Super+Left / Super+Right (tag switch)
+#  - L2/R2: Super+F2 / Super+F1 (thunar / rgds-cheatsheet in bind.conf)
 #  - R3/L3: Tab / Shift+Tab
 #  - SELECT: Super+Space (focus the other screen)
 
@@ -26,8 +26,8 @@ COMBO = {
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
     e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
     e.BTN_SELECT: (e.KEY_LEFTMETA,  e.KEY_SPACE),
-    e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFT),
-    e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_RIGHT),
+    e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_F2),
+    e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
     e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
 }
