@@ -26,6 +26,7 @@ ROWS = [
     ("D-pad", "Arrow keys", None),
     ("R3", "Tab", None),
     ("POWER", "Power menu", ["rotate-logout"]),
+    ("", "Brightness", ["rotate-brightness"]),
     ("", "Wallpaper", ["rotate-wallpaper"]),
     ("", "Files", ["thunar"]),
 ]

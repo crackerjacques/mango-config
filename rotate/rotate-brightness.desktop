@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Brightness
+Comment=Screen brightness slider
+Exec=rotate-brightness
+Icon=rotate-brightness
+Categories=Settings;
