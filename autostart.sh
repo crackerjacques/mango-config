@@ -16,7 +16,7 @@ systemctl --no-ask-password start rgds-touch &
 swaync -c ~/.config/mango/swaync/config.jsonc -s ~/.config/mango/swaync/style.css >/dev/null 2>&1 &
 
 # night light
-wlsunset -T 3501 -t 3500 >/dev/null 2>&1 &
+# wlsunset -T 3501 -t 3500 >/dev/null 2>&1 &
 
 # wallpaper
 swaybg -i ~/.config/mango/wallpaper/wallpaper.png >/dev/null 2>&1 &
