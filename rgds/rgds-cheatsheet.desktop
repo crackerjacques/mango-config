@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=RG DS Controls
+Name=RG DS CheatSheet
 Comment=What every button does, and tap a row to run it
 Exec=rgds-cheatsheet
 Icon=rgds-cheatsheet
