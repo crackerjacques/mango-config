@@ -2,6 +2,6 @@
 Type=Application
 Name=Wallpaper
 Comment=Pick the wallpaper and how it is laid out
-Exec=rotate-wallpaper
-Icon=rotate-wallpaper
+Exec=vita-wallpaper
+Icon=vita-wallpaper
 Categories=Settings;

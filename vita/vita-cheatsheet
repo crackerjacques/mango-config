@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# RG Rotate: what every button does under mango. Rows with an action run it when
+# RG Vita Pro: what every button does under mango. Rows with an action run it when
 
 import subprocess
 
@@ -7,7 +7,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gdk, Gtk
 
-WVKBD = 'pkill -RTMIN -x wvkbd-mobintl || wvkbd-mobintl -L 275 -H 275 --fn "Sans 16"'
+WVKBD = 'pkill -RTMIN -x wvkbd-mobintl || wvkbd-mobintl -L 300 -H 300 --fn "Sans 18" --landscape-layers full,special'
 ROFI = "rofi -config ~/.config/mango/rofi/config.rasi -show drun"
 
 # (button, what it does, command run on tap or None)
@@ -17,16 +17,17 @@ ROWS = [
     ("R1", "Terminal", ["foot"]),
     ("L2", "Previous desktop", ["mmsg", "dispatch", "viewtoleft,0"]),
     ("R2", "This cheat sheet", None),
-    ("SELECT", "Lid settings", ["rotate-lid-settings"]),
+    ("SELECT", "Screen off (any button wakes)", ["vita-screenoff"]),
     ("START + ←/→", "Previous / next desktop", None),
     ("HOME", "Switch window", None),
     ("X", "Close window", None),
     ("A / B", "Enter / Esc", None),
     ("Y", "Home", None),
     ("D-pad", "Arrow keys", None),
-    ("R3", "Tab", None),
-    ("POWER", "Power menu", ["rotate-logout"]),
-    ("", "Wallpaper", ["rotate-wallpaper"]),
+    ("L3 / R3", "Shift+Tab / Tab", None),
+    ("PLAY", "Play / pause", None),
+    ("POWER", "Power menu", ["vita-logout"]),
+    ("", "Wallpaper", ["vita-wallpaper"]),
     ("", "Files", ["thunar"]),
 ]
 
@@ -69,7 +70,7 @@ def row_content(key, text, runnable):
 
 class CheatSheet(Gtk.ApplicationWindow):
     def __init__(self, app):
-        super().__init__(application=app, title="RG Rotate Controls")
+        super().__init__(application=app, title="RG Vita Pro Controls")
         self.set_default_size(640, 600)
 
         keys = Gtk.EventControllerKey()
@@ -117,6 +118,6 @@ def on_activate(app):
     CheatSheet(app)
 
 
-app = Gtk.Application(application_id="org.armbian.RotateCheatsheet")
+app = Gtk.Application(application_id="org.armbian.VitaCheatsheet")
 app.connect("activate", on_activate)
 app.run(None)

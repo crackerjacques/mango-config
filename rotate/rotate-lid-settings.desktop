@@ -1,7 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Rotate Lid Settings
-Comment=Choose what closing the lid does: nothing, screen off or sleep
-Exec=rotate-lid-settings
-Icon=rotate-lid-settings
-Categories=Settings;

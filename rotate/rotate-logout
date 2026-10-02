@@ -1,6 +1,0 @@
-#!/bin/sh
-# RG Rotate: logout menu laid out for the 720x720 panel. Run by the power key
-# (bind.conf) and the mangobar power icon; running it again closes the menu.
-pkill -x wlogout && exit 0
-exec wlogout -C ~/.config/mango/wlogout/style.css -l ~/.config/mango/wlogout/layout \
-	-b 1 -T 170 -B 190 -L 200 -R 160 -r 12 --protocol layer-shell

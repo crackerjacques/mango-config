@@ -1,11 +1,11 @@
 #!/bin/bash
-# RG Rotate: build and set up mango on Ubuntu 26.04 from scratch.
+# RG Vita Pro: build and set up mango on Ubuntu 26.04 from scratch.
 
 set -eu
 
 SRC=$HOME/src/mango-build
 CONFIG_REPO=https://github.com/crackerjacques/mango-config.git
-CONFIG_BRANCH=anbernic-rg-rotate
+CONFIG_BRANCH=anbernic-vita-pro
 JOBS=$(nproc)
 
 say() { printf '\n\033[1;33m==> %s\033[0m\n' "$*"; }
@@ -124,8 +124,8 @@ step_config() {
 }
 
 step_board() {
-	say "RG Rotate helpers (pad2key, lid, power menu)"
-	sudo sh "$HOME/.config/mango/rotate/install.sh"
+	say "RG Vita Pro helpers (pad2key, power menu, wallpaper, cheat sheet)"
+	sudo sh "$HOME/.config/mango/vita/install.sh"
 }
 
 step_autologin() {
@@ -154,15 +154,15 @@ ALL="deps wlroots scenefx mango foot extras rust config board autologin"
 
 cat <<EOF
 
-  Anbernic RG Rotate AutoSetup
-  ============================
+  Anbernic RG Vita Pro AutoSetup
+  ==============================
   Builds the mango Wayland compositor and its desktop pieces from source
   (wlroots, scenefx, mango, foot, mangobar, ...) into /usr/local, puts the
-  RG Rotate mango config in ~/.config/mango and installs the RG Rotate
-  helpers (gamepad keys, lid settings, power menu).
+  RG Vita Pro mango config in ~/.config/mango and installs the RG Vita Pro
+  helpers (gamepad keys, power menu, wallpaper, cheat sheet).
 
   Steps to run: ${*:-$ALL}
-  Sources go to $SRC. This takes a long time on the RG Rotate.
+  Sources go to $SRC. This takes a while on the RG Vita Pro.
 
 EOF
 read -r -p "Proceed? (N/y) " answer </dev/tty

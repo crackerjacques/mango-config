@@ -1,0 +1,22 @@
+#!/bin/sh
+# RG Vita Pro: blank the panel until the next button press or touch.
+#
+# swayidle fires "resume" on the first input after a second of quiet, which
+# wakes the panel again. An idle inhibitor (audio playing) holds that back,
+# so the power key also wakes it: vita-logout calls "vita-screenoff wake".
+
+flag=${XDG_RUNTIME_DIR:-/tmp}/vita-screenoff
+
+if [ "$1" = wake ]; then
+	mmsg dispatch wakeup_monitor,DSI-1
+	[ -s "$flag" ] && kill "$(cat "$flag")" 2>/dev/null
+	# Kept a moment longer, so the press that woke the panel does not also
+	# open the power menu.
+	(sleep 1; rm -f "$flag") &
+	exit 0
+fi
+
+[ -e "$flag" ] && exit 0
+echo $$ >"$flag"
+mmsg dispatch sleep_monitor,DSI-1
+exec swayidle timeout 1 true resume "vita-screenoff wake"

@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+# RG Vita Pro: power menu, run by the power key (bind.conf) and the mangobar power
+# icon. Launching it again while it is open closes it.
+#
+# Not wlogout: wlogout quits on any press that reaches its background, and on
+# a touchscreen the tap on a button reaches it too, so the menu closed instead
+# of acting. Pressing the power key while the screen is off (vita-screenoff)
+# only wakes it.
+import os
+import subprocess
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, Gtk
+
+SCREENOFF = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "vita-screenoff")
+
+ITEMS = [
+    ("Screen off", ["vita-screenoff"]),
+    ("Suspend", ["systemctl", "suspend"]),
+    ("Reboot", ["systemctl", "reboot"]),
+    ("Shut down", ["systemctl", "poweroff"]),
+    ("Log out", ["mmsg", "dispatch", "quit"]),
+]
+
+CSS = """
+window { background: #201b14; }
+button {
+    background: #201b14; background-image: none; box-shadow: none;
+    border: 4px solid #201b14; border-radius: 10px; padding: 10px 48px;
+}
+button label { color: #d1b88e; font-family: Hack; font-size: 22px; }
+button:focus { border-color: #d1b88e; }
+button:hover, button:active { background: #ac9259; }
+button:hover label, button:active label { color: #201b14; }
+"""
+
+
+def load_css():
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+        provider.load_from_string(CSS)
+    else:
+        provider.load_from_data(CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+
+class PowerMenu(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Power")
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8,
+                      margin_top=16, margin_bottom=16, margin_start=16, margin_end=16)
+        self.set_child(box)
+
+        first = None
+        for label, cmd in ITEMS:
+            b = Gtk.Button(label=label)
+            b.connect("clicked", self.run, cmd)
+            box.append(b)
+            first = first or b
+
+        self.present()
+        first.grab_focus()
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+    def run(self, _button, cmd):
+        self.close()
+        subprocess.Popen(cmd, start_new_session=True)
+
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:  # second launch: toggle the open menu shut
+        win.close()
+        return
+    load_css()
+    PowerMenu(app)
+
+
+if os.path.exists(SCREENOFF):
+    subprocess.run(["vita-screenoff", "wake"])
+else:
+    app = Gtk.Application(application_id="org.armbian.VitaLogout")
+    app.connect("activate", on_activate)
+    app.run(None)

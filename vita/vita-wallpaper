@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# RG Rotate: pick the wallpaper and how it is laid out.
+# RG Vita Pro: pick the wallpaper and how it is laid out.
 
 import os
 import shutil
@@ -10,7 +10,7 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Gdk, Gio, GLib, Gtk
 
 CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"),
-                    "rotate-wallpaper")
+                    "vita-wallpaper")
 DEFAULT = os.path.expanduser("~/.config/mango/wallpaper/wallpaper.png")
 APPLY = os.path.expanduser("~/.config/mango/scripts/wallpaper.sh")
 
@@ -163,6 +163,6 @@ def on_activate(app):
     Wallpaper(app)
 
 
-app = Gtk.Application(application_id="org.armbian.RotateWallpaper")
+app = Gtk.Application(application_id="org.armbian.VitaWallpaper")
 app.connect("activate", on_activate)
 app.run(None)

@@ -121,7 +121,7 @@
     },
     "custom/power": {
         "format": "󰣇",
-        "on-click": "rotate-logout",
+        "on-click": "vita-logout",
         "on-click-right": "sleep 0.1s && swaync-client -t -sw"
     },
     "custom/clock": {

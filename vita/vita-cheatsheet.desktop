@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=RG Rotate Controls
+Name=RG Vita Pro Controls
 Comment=What every button does, and tap a row to run it
-Exec=rotate-cheatsheet
-Icon=rotate-cheatsheet
+Exec=vita-cheatsheet
+Icon=vita-cheatsheet
 Categories=Utility;
