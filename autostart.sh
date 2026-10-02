@@ -6,6 +6,9 @@ set +e
 # ensure xdg-desktop-portal running without last dirty state
 systemctl --user restart xdg-desktop-portal &
 
+# RG DS: split the two touchscreens for this session (stopped again on logout)
+systemctl --no-ask-password start rgds-touch &
+
 # some env can't auto run the portal, so need this
 /usr/lib/xdg-desktop-portal-wlr  >/dev/null 2>&1 &
 

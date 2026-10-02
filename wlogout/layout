@@ -1,6 +1,6 @@
 {
     "label" : "logout",
-    "action" : "mmsg dispatch quit",
+    "action" : "systemctl --no-ask-password stop rgds-touch; mmsg dispatch quit",
     "text" : "Logout",
     "keybind" : "m"
 }

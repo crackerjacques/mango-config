@@ -8,7 +8,8 @@
 # rgds-touch-top to DSI-2 and rgds-touch-bottom to DSI-1.
 #
 # The grab hides the real panels from everything else, so this is for the
-# mango session only: under X11, rgds-screen maps the real devices instead.
+# mango session only: autostart.sh starts it and logout stops it, and under
+# X11 rgds-screen maps the real devices instead.
 import glob, os, select, time, evdev
 from evdev import UInput
 
