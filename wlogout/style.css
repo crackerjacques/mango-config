@@ -9,9 +9,9 @@ window {
 button {
     background-repeat: no-repeat;
     background-position: 32px center;
-    font-size: 24px;
-    background-size: 40px;
-    padding: 0 0 22px 0;
+    font-size: 20px;
+    background-size: 32px;
+    padding: 0 0 15px 0;
     border: none;
     color: #d5b497;
     text-shadow: none;
@@ -23,7 +23,7 @@ button {
 
 button:hover, button:focus {
     background-color: rgba(184, 149, 80, 0.3);
-    background-size: 44px;
+    background-size: 36px;
     transition: all 0.3s cubic-bezier(.55, 0.0, .28, 1.682), box-shadow 0.5s ease-in;
 }
 

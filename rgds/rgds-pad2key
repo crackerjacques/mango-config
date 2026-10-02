@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-# RG Rotate: gamepad buttons -> keyboard keys (evdev/uinput, X11/Wayland-safe).
+# RG DS: gamepad/HOME buttons -> keyboard keys (evdev/uinput), mango variant of
+# the bsp's /usr/bin/rgds-pad2key. install.sh puts it over that file and the
+# existing rgds-pad2key.service runs it unchanged.
+#  - L1/R1: Super+PageUp / Super+PageDown (wvkbd / foot in bind.conf)
+#  - L2/R2: Super+Left / Super+Right (tag switch)
+#  - R3/L3: Tab / Shift+Tab
 
 import time, select, evdev
 from evdev import ecodes as e, UInput
@@ -19,6 +24,7 @@ MAP = {
 COMBO = {
     e.BTN_MODE:   (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
+    e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
     e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFT),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_RIGHT),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
@@ -26,9 +32,9 @@ COMBO = {
 }
 ALL = set(MAP) | set(COMBO)
 
-REQUIRED = {e.BTN_DPAD_UP, e.BTN_DPAD_DOWN, e.BTN_DPAD_LEFT, e.BTN_DPAD_RIGHT,
-            e.BTN_SOUTH, e.BTN_EAST}
-
+# The buttons are split over two devices (gpio-keys pad, adc-keys HOME), so any
+# device carrying a mapped code is taken. Anything with axes is skipped: that
+# is a USB controller, whose buttons must not turn into desktop keys.
 def sources():
     out = {}
     for p in evdev.list_devices():
@@ -36,10 +42,10 @@ def sources():
             d = evdev.InputDevice(p)
         except Exception:
             continue
-        if d.name == "rotate-pad2key":
+        if d.name == "rgds-pad2key":
             continue
         caps = d.capabilities()
-        if not REQUIRED <= set(caps.get(e.EV_KEY, [])):
+        if not ALL & set(caps.get(e.EV_KEY, [])):
             continue
         if caps.get(e.EV_ABS):
             continue
@@ -56,12 +62,10 @@ _keys = set(MAP.values())
 for _seq in COMBO.values():
     _keys.update(_seq)
 
-ui = UInput({e.EV_KEY: sorted(_keys)}, name="rotate-pad2key")
+ui = UInput({e.EV_KEY: sorted(_keys)}, name="rgds-pad2key")
 
 # Keys this process is currently holding down, per source. A device can vanish
-# mid-press (rfkill, driver reload, an unplugged pad), and without this the
-# virtual keyboard keeps the key down for good - a stuck KEY_LEFTMETA leaves the
-# desktop unusable on a board with no keyboard to clear it with.
+# mid-press, and without this the virtual keyboard keeps the key down for good.
 held = {}
 
 def drop(fd):

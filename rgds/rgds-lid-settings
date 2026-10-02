@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# RG Rotate: choose what closing the lid does.
+# RG DS: choose what closing the lid does.
 
 import os
 import subprocess
@@ -9,8 +9,8 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Gdk, GLib, Gtk
 
 CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"),
-                    "rotate-lid")
-DROPIN = "/etc/systemd/logind.conf.d/50-rotate-lid.conf"
+                    "rgds-lid")
+DROPIN = "/etc/systemd/logind.conf.d/50-rgds-lid.conf"
 SETUP = ("mkdir -p /etc/systemd/logind.conf.d && "
          "printf '[Login]\\nHandleLidSwitch=ignore\\nHandleLidSwitchExternalPower=ignore\\n"
          "HandleLidSwitchDocked=ignore\\n' >" + DROPIN + " && "
@@ -20,12 +20,12 @@ MODES = [("none", "Do nothing"), ("off", "Screen off"), ("sleep", "Sleep")]
 
 CSS = """
 window { background: #201b14; }
-label { color: #d1b88e; font-family: Hack; font-size: 28px; }
+label { color: #d1b88e; font-family: Hack; font-size: 22px; }
 label.dim { color: #888888; }
 label.err { color: #ef2929; }
 button {
     background: #201b14; background-image: none; box-shadow: none;
-    border: 4px solid #201b14; border-radius: 10px; padding: 16px;
+    border: 4px solid #201b14; border-radius: 10px; padding: 10px;
 }
 button:checked { background: #ac9259; }
 button:checked label { color: #201b14; }
@@ -128,6 +128,6 @@ def on_activate(app):
     LidSettings(app)
 
 
-app = Gtk.Application(application_id="org.armbian.RotateLidSettings")
+app = Gtk.Application(application_id="org.armbian.RgdsLidSettings")
 app.connect("activate", on_activate)
 app.run(None)

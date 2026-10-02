@@ -1,0 +1,8 @@
+[Unit]
+Description=RG DS touchscreens under distinct names (mango)
+[Service]
+ExecStart=/usr/bin/rgds-touch
+Restart=always
+RestartSec=2
+[Install]
+WantedBy=multi-user.target

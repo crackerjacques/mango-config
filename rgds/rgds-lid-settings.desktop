@@ -2,6 +2,6 @@
 Type=Application
 Name=Lid Settings
 Comment=Choose what closing the lid does: nothing, screen off or sleep
-Exec=rotate-lid-settings
+Exec=rgds-lid-settings
 Icon=preferences-desktop-screensaver
 Categories=Settings;

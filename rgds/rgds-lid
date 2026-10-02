@@ -1,0 +1,17 @@
+#!/bin/bash
+# RG DS: lid switch handler, run by the switchbind lines in bind.conf.
+#
+# What closing the lid does is picked with rgds-lid-settings and kept in
+# ~/.config/rgds-lid: none, off (panel power only) or sleep. logind must
+# be told to ignore the lid (rgds-lid-settings sets that up), otherwise it
+# suspends on its own before this ever runs.
+
+OUTPUTS="DSI-1 DSI-2"
+
+mode=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/rgds-lid" 2>/dev/null)
+
+case "$1:${mode:-none}" in
+	fold:off)	for o in $OUTPUTS; do mmsg dispatch "sleep_monitor,$o"; done ;;
+	fold:sleep)	systemctl suspend ;;
+	unfold:*)	for o in $OUTPUTS; do mmsg dispatch "wakeup_monitor,$o"; done ;;
+esac
