@@ -4,7 +4,7 @@
 set -e
 cd "$(dirname "$0")"
 
-install -m 755 rgds-pad2key rgds-touch rgds-lid rgds-lid-settings rgds-logout /usr/bin/
+install -m 755 rgds-pad2key rgds-touch rgds-lid rgds-lid-settings rgds-logout rgds-screenoff /usr/bin/
 install -m 644 rgds-touch.service /etc/systemd/system/
 install -m 644 rgds-lid-settings.desktop /usr/share/applications/
 install -m 644 49-rgds-touch.rules /etc/polkit-1/rules.d/

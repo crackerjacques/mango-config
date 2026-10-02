@@ -1,0 +1,23 @@
+#!/bin/sh
+# RG DS: blank both panels until the next button press or touch. The lid has
+# no sensor on this unit, so this is the by-hand version of closing it.
+#
+# swayidle fires "resume" on the first input after a second of quiet, which
+# wakes the panels again. An idle inhibitor (audio playing) holds that back,
+# so the power key also wakes them: rgds-logout calls "rgds-screenoff wake".
+
+flag=${XDG_RUNTIME_DIR:-/tmp}/rgds-screenoff
+
+if [ "$1" = wake ]; then
+	for o in DSI-1 DSI-2; do mmsg dispatch "wakeup_monitor,$o"; done
+	[ -s "$flag" ] && kill "$(cat "$flag")" 2>/dev/null
+	# Kept a moment longer, so the press that woke the panels does not also
+	# open the power menu.
+	(sleep 1; rm -f "$flag") &
+	exit 0
+fi
+
+[ -e "$flag" ] && exit 0
+echo $$ >"$flag"
+for o in DSI-1 DSI-2; do mmsg dispatch "sleep_monitor,$o"; done
+exec swayidle timeout 1 true resume "rgds-screenoff wake"
