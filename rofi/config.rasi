@@ -1,5 +1,5 @@
 * {
-    g-spacing: 10px;
+    g-spacing: 8px;
     g-margin: 0;
     b-color: #000000cc;
     fg-color: #d3d3ce;
@@ -14,11 +14,11 @@
     // wbg-color: #201B14d0;
     w-border: 2px solid;
     w-border-color: #c9b890;
-    w-padding: 12px;
+    w-padding: 10px;
 }
 
 configuration {
-    font: "Maple Mono NF CN bold 14";
+    font: "Hack 10";
     modi: "drun";
     show-icons: true;
     sort: true;
