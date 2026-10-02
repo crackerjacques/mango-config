@@ -5,6 +5,7 @@
 #  - L1/R1: Super+PageUp / Super+PageDown (wvkbd / foot in bind.conf)
 #  - L2/R2: Super+Left / Super+Right (tag switch)
 #  - R3/L3: Tab / Shift+Tab
+#  - SELECT: Super+Space (focus the other screen)
 
 import time, select, evdev
 from evdev import ecodes as e, UInput
@@ -16,7 +17,6 @@ MAP = {
     e.BTN_SOUTH:  e.KEY_ENTER,
     e.BTN_EAST:   e.KEY_ESC,
     e.BTN_WEST:   e.KEY_HOME,
-    e.BTN_SELECT: e.KEY_SPACE,
     e.BTN_START:  e.KEY_LEFTMETA,
     e.BTN_THUMBR: e.KEY_TAB,
 }
@@ -25,6 +25,7 @@ COMBO = {
     e.BTN_MODE:   (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
     e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
+    e.BTN_SELECT: (e.KEY_LEFTMETA,  e.KEY_SPACE),
     e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFT),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_RIGHT),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
