@@ -69,6 +69,7 @@ The analog sticks are left alone and always work as a gamepad.
 | `vita-screenoff` | Blanks the panel until the next input |
 | `vita-cheatsheet` | Controls list; tap a row to run it |
 | `vita-wallpaper` | Pick the wallpaper and its layout (fill, fit, stretch, center, tile) |
+| `vita-brightness` | Screen brightness slider (there are no brightness keys) |
 | `install.sh` | Puts the above in `/usr/bin` and leaves a short power-key press to mango |
 
 ## Display

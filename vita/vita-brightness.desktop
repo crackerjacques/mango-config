@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Brightness
+Comment=Screen brightness slider
+Exec=vita-brightness
+Icon=vita-brightness
+Categories=Settings;
