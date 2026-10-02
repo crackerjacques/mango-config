@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Lid Settings
+Name=RG DS Lid Settings
 Comment=Choose what closing the lid does: nothing, screen off or sleep
 Exec=rgds-lid-settings
-Icon=preferences-desktop-screensaver
+Icon=color-mode-invert-image
 Categories=Settings;

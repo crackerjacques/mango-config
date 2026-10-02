@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Wallpaper
+Name=RG DS Wallpaper
 Comment=Pick the wallpaper for the top and the bottom screen
 Exec=rgds-wallpaper
-Icon=preferences-desktop-wallpaper
+Icon=x-shape-image
 Categories=Settings;

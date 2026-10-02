@@ -51,7 +51,7 @@ step_deps() {
 		rofi xdg-desktop-portal-wlr swaybg cliphist wl-clipboard wlsunset \
 		xfce-polkit sway-notification-center pamixer swayidle brightnessctl swayosd \
 		wlr-randr grim slurp sox wvkbd fonts-font-awesome fonts-hack \
-		python3-gi gir1.2-gtk-4.0 python3-evdev thunar
+		python3-gi gir1.2-gtk-4.0 python3-evdev thunar breeze-icon-theme
 }
 
 step_wlroots() {
