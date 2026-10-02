@@ -21,6 +21,7 @@ configuration {
     font: "Hack 10";
     modi: "drun";
     show-icons: true;
+    icon-theme: "breeze";
     sort: true;
     sorting-method:"fzf";
     display-drun: " ";

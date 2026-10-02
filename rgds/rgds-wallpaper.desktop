@@ -3,5 +3,5 @@ Type=Application
 Name=RG DS Wallpaper
 Comment=Pick the wallpaper for the top and the bottom screen
 Exec=rgds-wallpaper
-Icon=x-shape-image
+Icon=rgds-wallpaper
 Categories=Settings;

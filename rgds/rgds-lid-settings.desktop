@@ -3,5 +3,5 @@ Type=Application
 Name=RG DS Lid Settings
 Comment=Choose what closing the lid does: nothing, screen off or sleep
 Exec=rgds-lid-settings
-Icon=color-mode-invert-image
+Icon=rgds-lid-settings
 Categories=Settings;
