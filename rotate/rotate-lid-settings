@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
 # RG Rotate: choose what closing the lid does.
-#
-# The choice goes to ~/.config/rotate-lid and is acted on by rotate-lid. The
-# first time round it also installs a logind drop-in that makes logind ignore
-# the lid, since otherwise logind suspends regardless of the choice here.
-#
-# GTK 4: it talks Wayland directly (Tk would need Xwayland) and its
-# introspection data is what the image already carries. Driven by touch or by
-# the pad through rotate-pad2key: up/down move between the choices, A (Enter)
-# picks one, B (Esc) closes.
+
 import os
 import subprocess
 

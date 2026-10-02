@@ -13,7 +13,5 @@ mode=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/rotate-lid" 2>/dev/null)
 case "$1:${mode:-none}" in
 	fold:off)	mmsg dispatch "sleep_monitor,$OUTPUT" ;;
 	fold:sleep)	systemctl suspend ;;
-	# Always wake the panel on open - harmless if it was never put to sleep,
-	# and it covers a mode change made while the lid was shut.
 	unfold:*)	mmsg dispatch "wakeup_monitor,$OUTPUT" ;;
 esac

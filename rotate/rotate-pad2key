@@ -1,36 +1,10 @@
 #!/usr/bin/env python3
 # RG Rotate: gamepad buttons -> keyboard keys (evdev/uinput, X11/Wayland-safe).
-#
-# mango variant of the bsp's /usr/bin/rotate-pad2key - install it over that
-# file and the existing rotate-pad2key.service runs it unchanged. What differs:
-#  - L1/R1 send Super+PageUp / Super+PageDown, so that bind.conf can hang
-#    wvkbd and foot on them without taking plain PageUp and PageDown away
-#    from wvkbd or a real keyboard.
-#  - L2/R2 send Super+Left / Super+Right, mango's tag (desktop) switch.
-#    Tab moves to THUMBR, which the bsp version leaves unused; Shift+Tab is
-#    dropped.
-#
-# There is no keyboard on this board and no broken-out UART, so without this
-# the desktop cannot be driven at all once X is up - the touchscreen alone
-# cannot reach a menu or a text field. Off by default is not an option here
-# the way it is on a machine with a keyboard attached.
-#
-# This SKU is stickless: every input is a discrete GPIO carrying a BTN_* code
-# straight from gpio-keys, so matching on capabilities is enough to pick the
-# pad out and leave the volume and power keys alone.
-#
-# The events are read, not grabbed, so the raw pad still reaches whatever is
-# running - which is why this is worth turning off for games, and why
-# rotate-pad2key-toggle exists.
+
 import time, select, evdev
 from evdev import ecodes as e, UInput
 
-# Every code here is one this board actually reports - evtest on the
-# gpio-keys pad gives SOUTH EAST NORTH WEST, TL TR TL2 TR2, SELECT START
-# MODE THUMBR and the four DPAD buttons (the d-pad is discrete buttons on
-# this SKU, not a hat). Tab is on the triggers because focus movement is the
-# one thing a desktop cannot be driven without and there is no keyboard to
-# fall back on.
+
 MAP = {
     e.BTN_DPAD_UP: e.KEY_UP,     e.BTN_DPAD_DOWN: e.KEY_DOWN,
     e.BTN_DPAD_LEFT: e.KEY_LEFT, e.BTN_DPAD_RIGHT: e.KEY_RIGHT,
@@ -52,12 +26,6 @@ COMBO = {
 }
 ALL = set(MAP) | set(COMBO)
 
-# Match the board's pad, not every gamepad that happens to share a button code.
-# This SKU reports its d-pad as four discrete BTN_DPAD_* keys and has no axes at
-# all; a USB controller has ABS sticks and reports its d-pad as ABS_HAT0X/Y. So
-# require the whole d-pad plus the face buttons, and reject anything with EV_ABS
-# - otherwise plugging in a controller would turn its buttons into desktop keys,
-# including KEY_LEFTMETA and ctrl-F4.
 REQUIRED = {e.BTN_DPAD_UP, e.BTN_DPAD_DOWN, e.BTN_DPAD_LEFT, e.BTN_DPAD_RIGHT,
             e.BTN_SOUTH, e.BTN_EAST}
 
