@@ -11,7 +11,6 @@ MAP = {
     e.BTN_SOUTH:  e.KEY_ENTER,
     e.BTN_EAST:   e.KEY_ESC,
     e.BTN_WEST:   e.KEY_HOME,
-    e.BTN_SELECT: e.KEY_SPACE,
     e.BTN_START:  e.KEY_LEFTMETA,
     e.BTN_THUMBR: e.KEY_TAB,
 }
@@ -19,8 +18,9 @@ MAP = {
 COMBO = {
     e.BTN_MODE:   (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
+    e.BTN_SELECT: (e.KEY_LEFTMETA,  e.KEY_SPACE),
     e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFT),
-    e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_RIGHT),
+    e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
     e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
 }

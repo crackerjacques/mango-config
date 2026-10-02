@@ -16,7 +16,7 @@ swaync -c ~/.config/mango/swaync/config.jsonc -s ~/.config/mango/swaync/style.cs
 wlsunset -T 3501 -t 3500 >/dev/null 2>&1 &
 
 # wallpaper
-swaybg -i ~/.config/mango/wallpaper/wallpaper.png >/dev/null 2>&1 &
+sh ~/.config/mango/scripts/wallpaper.sh >/dev/null 2>&1 &
 
 # top bar
 mangobar -c ~/.config/mango/mangobar/config.jsonc -s ~/.config/mango/mangobar/style.css 2>&1 &

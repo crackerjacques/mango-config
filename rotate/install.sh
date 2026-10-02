@@ -4,8 +4,12 @@
 set -e
 cd "$(dirname "$0")"
 
-install -m 755 rotate-pad2key rotate-lid rotate-lid-settings rotate-logout /usr/bin/
-install -m 644 rotate-lid-settings.desktop /usr/share/applications/
+install -m 755 rotate-pad2key rotate-lid rotate-lid-settings rotate-logout rotate-wallpaper rotate-cheatsheet /usr/bin/
+install -m 644 rotate-lid-settings.desktop rotate-wallpaper.desktop \
+	rotate-cheatsheet.desktop /usr/share/applications/
+# own icons in hicolor, which every icon theme falls back to
+install -m 644 icons/*.svg /usr/share/icons/hicolor/scalable/apps/
+gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true
 
 mkdir -p /etc/systemd/logind.conf.d
 cat >/etc/systemd/logind.conf.d/50-rotate-powerkey.conf <<'CONF'

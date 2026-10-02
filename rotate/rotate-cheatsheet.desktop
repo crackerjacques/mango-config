@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=RG Rotate Controls
+Comment=What every button does, and tap a row to run it
+Exec=rotate-cheatsheet
+Icon=rotate-cheatsheet
+Categories=Utility;
