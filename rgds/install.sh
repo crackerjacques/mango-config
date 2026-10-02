@@ -4,10 +4,10 @@
 set -e
 cd "$(dirname "$0")"
 
-install -m 755 rgds-pad2key rgds-touch rgds-lid rgds-lid-settings rgds-logout rgds-screenoff rgds-cheatsheet rgds-wallpaper /usr/bin/
+install -m 755 rgds-pad2key rgds-touch rgds-lid rgds-lid-settings rgds-logout rgds-screenoff rgds-cheatsheet rgds-wallpaper rgds-brightness /usr/bin/
 install -m 644 rgds-touch.service /etc/systemd/system/
 install -m 644 rgds-lid-settings.desktop rgds-cheatsheet.desktop \
-	rgds-wallpaper.desktop /usr/share/applications/
+	rgds-wallpaper.desktop rgds-brightness.desktop /usr/share/applications/
 install -m 644 49-rgds-touch.rules /etc/polkit-1/rules.d/
 # own icons in hicolor, which every icon theme falls back to
 install -m 644 icons/*.svg /usr/share/icons/hicolor/scalable/apps/

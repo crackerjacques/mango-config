@@ -31,6 +31,7 @@ ROWS = [
     ("D-pad", "Arrow keys", None),
     ("L3 / R3", "Shift+Tab / Tab", None),
     ("POWER", "Power menu", ["rgds-logout"]),
+    ("", "Brightness", ["rgds-brightness"]),
     ("", "Screen off (any button wakes)", ["rgds-screenoff"]),
 ]
 

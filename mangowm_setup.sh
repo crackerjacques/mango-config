@@ -156,6 +156,19 @@ cat <<EOF
 
   Anbernic RG-DS AutoSetup
   ========================
+  **NOTE**
+
+  Before running this script,
+  please add “deb-src” to "Types" Line.
+  /etc/apt/sources.list.d/ubuntu.sources
+  
+  Like:
+  ========
+  Types: deb deb-src <---------THIS LINE
+  URIs: http://ports.ubuntu.com/
+  ....
+  ========
+
   Builds the mango Wayland compositor and its desktop pieces from source
   (wlroots, scenefx, mango, foot, mangobar, ...) into /usr/local, puts the
   RG DS mango config in ~/.config/mango and installs the RG DS helpers

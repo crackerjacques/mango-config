@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+# RG DS: brightness sliders, one per screen - each panel has its own
+# backlight (backlight1 = top/DSI-2, backlight0 = bottom/DSI-1 in the DTS).
+# Drag a slider, or d-pad up/down to pick one and left/right to move it;
+# B (Esc) closes.
+#
+# Goes through brightnessctl, which asks logind when the backlight is not
+# writable by the user. Kept above 5% so the panel can never be turned black.
+import subprocess
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, Gtk
+
+LOWEST = 5
+
+# (backlight device, label)
+PANELS = [("backlight1", "Top"), ("backlight0", "Bottom")]
+
+CSS = """
+window { background: #201b14; }
+label { color: #d1b88e; font-family: Hack; font-size: 22px; }
+scale trough { min-height: 12px; border-radius: 6px; background: #3a3125; }
+scale highlight { border-radius: 6px; background: #ac9259; }
+scale slider { min-width: 28px; min-height: 28px; border-radius: 14px; background: #d1b88e; }
+scale:focus slider { outline: 3px solid #d1b88e; outline-offset: 2px; }
+"""
+
+
+def load_css():
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+        provider.load_from_string(CSS)
+    else:
+        provider.load_from_data(CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+
+def current(device):
+    # brightnessctl -m: device,class,current,percent%,max
+    try:
+        out = subprocess.run(["brightnessctl", "-m", "-d", device],
+                             capture_output=True, text=True).stdout
+        return int(out.split(",")[3].rstrip("%\n"))
+    except (OSError, IndexError, ValueError):
+        return 50
+
+
+class Brightness(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Brightness")
+        self.set_default_size(560, -1)
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16,
+                      margin_top=24, margin_bottom=24, margin_start=24, margin_end=24)
+        self.set_child(box)
+
+        first = None
+        for device, name in PANELS:
+            label = Gtk.Label(xalign=0)
+            box.append(label)
+            scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, LOWEST, 100, 1)
+            scale.set_draw_value(False)
+            scale.set_value(max(LOWEST, current(device)))
+            scale.connect("value-changed", self.changed, device, name, label)
+            box.append(scale)
+            self.show_label(scale, name, label)
+            first = first or scale
+
+        self.present()
+        first.grab_focus()
+
+    def show_label(self, scale, name, label):
+        label.set_text(f"{name}  {int(scale.get_value())}%")
+
+    def changed(self, scale, device, name, label):
+        self.show_label(scale, name, label)
+        subprocess.Popen(["brightnessctl", "-q", "-d", device, "set",
+                          f"{int(scale.get_value())}%"])
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:  # launched again: close it
+        win.close()
+        return
+    load_css()
+    Brightness(app)
+
+
+app = Gtk.Application(application_id="org.armbian.RgdsBrightness")
+app.connect("activate", on_activate)
+app.run(None)

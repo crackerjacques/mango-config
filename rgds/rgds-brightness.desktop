@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Brightness
+Comment=Screen brightness slider
+Exec=rgds-brightness
+Icon=rgds-brightness
+Categories=Settings;
