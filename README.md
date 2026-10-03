@@ -16,19 +16,21 @@ curl -LO https://raw.githubusercontent.com/crackerjacques/mango-config/anbernic-
 bash mangowm_setup.sh
 ```
 
-It asks before doing anything, then:
+It asks which input method to set up (none, Japanese, Chinese, Korean,
+Vietnamese) and to confirm, then:
 
 1. installs the build and runtime packages with apt
 2. builds wlroots 0.20.2, scenefx 0.5, mango, foot 1.28 and mangobar from
-   source into `/usr/local`
+   source into `/usr/local` (mango with `patches/`, see below)
 3. builds wl-clip-persist, dimland and satty with cargo (slow)
 4. clones this branch to `~/.config/mango` and installs the Nerd Fonts symbols
-5. installs the Vita Pro helpers in `vita/` (`vita/install.sh`)
-6. optionally sets up SDDM to log you straight into mango
+5. installs fcitx5 with the chosen input method, if any
+6. installs the Vita Pro helpers in `vita/` (`vita/install.sh`)
+7. optionally sets up SDDM to log you straight into mango
 
 Sources are kept in `~/src/mango-build`. If a step fails, re-run just that
 step and the ones after it, for example `bash mangowm_setup.sh foot extras`.
-Steps: `deps wlroots scenefx mango foot extras rust config board autologin`.
+Steps: `deps wlroots scenefx mango foot extras rust config ime board autologin`.
 
 To update later:
 
@@ -49,10 +51,11 @@ mmsg dispatch reload_config
 | L2 | Previous desktop |
 | R2 | Controls cheat sheet (tap a row to run it) |
 | SELECT | Screen off - any button or touch wakes it |
-| HOME | Switch window |
+| HOME (one of the two) | Switch window |
+| HOME (the other) | Input method (fcitx5) on / off |
 | X | Close window |
 | A / B | Enter / Esc |
-| Y | Home |
+| Y | Backspace |
 | D-pad | Arrow keys |
 | L3 / R3 | Shift+Tab / Tab |
 | POWER | Power menu (screen off, suspend, reboot, shut down, log out); hold to power off |
@@ -78,3 +81,10 @@ The panel is mounted portrait and mango does not read the DRM
 panel-orientation property, so `monitor.conf` turns it with `rr:1` and scales
 it with `scale:1.5`. If the picture is upside down, use `rr:3`; change `scale`
 to taste.
+
+## mango patch
+
+`patches/mango-im-replay-no-rebind.patch` stops mango from running its
+keybindings a second time on keys that fcitx5 hands back from its keyboard
+grab. Without it, a replayed lone Super press/release looks like a bare
+Super tap, so rofi pops up on every START + button chord while fcitx5 runs.
