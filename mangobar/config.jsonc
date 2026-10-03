@@ -1,24 +1,25 @@
 {
     "layer": "top",
-    "height": 30,
+    "height": 26,
     "buffer-scale": 1,
+    // Trimmed to fit a 640/720px wide panel: the title shrinks to what is
+    // left, everything on the right has to fit as is.
     "modules-left": [
         "workspaces",
-        "layout",
         "window",
     ],
     "modules-center": [],
     "modules-right": [
         // "custom/clock",
-        "hideclients",
+        // "hideclients",
         "tray",
-        "network",
+        // "network",
         // "keymode",
         // "keyboardlayout",
-        "cpu",
-        "memory",
+        // "cpu",
+        // "memory",
         "pulseaudio",
-        "backlight",
+        // "backlight",
         "battery",
         "clock#date",
         "clock#time",
@@ -110,14 +111,14 @@
         "hide-on-ac": true
     },
     "clock#date": {
-        "format": " {:L%b%d·%A}"
+        "format": "{:L%m/%d}"
     },
     "clock#time": {
         "format": " {:L%H:%M}"
     },
     "tray": {
-        "icon-size": 25,
-        "spacing": 10
+        "icon-size": 18,
+        "spacing": 6
     },
     "custom/power": {
         "format": "󰣇",

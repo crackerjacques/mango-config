@@ -50,21 +50,21 @@
 /* ==================== Font ==================== */
 * {
     font-family: "Maple Mono NF CN";
-    font-size: 20px;
+    font-size: 14px;
     font-weight: ExtraBold;
 }
 
 * {
     color: #ebdbb2;
     background-color: #504945;
-    padding: 0px 10px;
-    margin: 5px 1px;
+    padding: 0px 6px;
+    margin: 3px 1px;
     border-radius: 100px;
 }
 
 #bar {
     background: none;
-    margin: 5px 10px;
+    margin: 3px 4px;
 }
 #bar.sel {
     background: none;
@@ -72,7 +72,7 @@
 
 /* Workspace buttons (waybar #workspaces button) */
 #tags {
-    padding: 0px 13px;
+    padding: 0px 7px;
     margin: 0px 2px;
     background: linear-gradient(to top, mix(@color-workspace-button-bg, @color-bg, 0.15), mix(@color-workspace-button-bg, @color-gradient-fade, 0.30));
     color: @color-workspace-button-fg;
@@ -130,7 +130,7 @@
     color: @color-widget-network-fg;
 }
 #cpu {
-    padding: 0px 15px;
+    padding: 0px 8px;
     background: linear-gradient(to top, mix(@color-widget-cpu-bg, @color-bg, 0.15), mix(@color-widget-cpu-bg, @color-gradient-fade, 0.30));
     color: @color-widget-cpu-fg;
 }
@@ -165,13 +165,13 @@
 
 /* Custom modules use #custom-<name> (e.g. custom/power -> #custom-power) */
 #custom-power {
-    margin: 0px 5px;
+    margin: 0px 3px;
     background: linear-gradient(to top, mix(@color-widget-power-bg, @color-bg, 0.15), mix(@color-widget-power-bg, @color-gradient-fade, 0.30));
     color: @color-widget-power-fg;
 }
 
 #tray {
-    padding: 0px 15px;
+    padding: 0px 8px;
     background: linear-gradient(to top, mix(@color-widget-tray-bg, @color-bg, 0.16), mix(@color-widget-tray-bg, @color-gradient-fade, 0.30));
 }
 
