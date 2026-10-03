@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+# RG Rotate: desktop scale. Below 1 the 720x720 panel gets more room
+# (0.75 gives 960x960) at the cost of smaller text.
+
+import os
+import subprocess
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, GLib, Gtk
+
+CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"),
+                    "rotate-scale")
+RULES = os.path.join(CONF, "monitor.conf")
+WIDTH, HEIGHT = 720, 720
+KEEP_SECONDS = 15
+SCREENS = [("main", "Screen", "DSI-1")]
+SCALES = [1.0, 0.9, 0.8, 0.75, 2 / 3, 0.6, 0.5]
+
+APP_CSS = """
+label { font-family: Hack; font-size: 15px; }
+label.head { color: #6b5320; font-weight: bold; }
+label.warn { color: #c01c28; }
+button.apply { background: #ac9259; background-image: none; }
+button.apply label { color: #000000; font-weight: bold; }
+"""
+
+
+def label_of(scale):
+    return f"{scale:.2f}  -  {round(WIDTH / scale)}x{round(HEIGHT / scale)}"
+
+
+def current():
+    """Scales from the rules file, 1.0 for a screen it does not mention."""
+    found = {key: 1.0 for key, _, _ in SCREENS}
+    try:
+        with open(RULES) as f:
+            for line in f:
+                if not line.startswith("monitorrule="):
+                    continue
+                fields = dict(p.split(":", 1) for p in line.strip()[12:].split(",") if ":" in p)
+                for key, _, output in SCREENS:
+                    if fields.get("name") == f"^{output}$":
+                        found[key] = float(fields.get("scale", 1))
+    except (OSError, ValueError):
+        pass
+    return found
+
+
+def rules_for(scales):
+    lines = ["# written by rotate-scale"]
+    for key, _, output in SCREENS:
+        lines.append(f"monitorrule=name:^{output}$,width:{WIDTH},height:{HEIGHT},"
+                     f"x:0,y:0,scale:{scales[key]:.6f}")
+    return "\n".join(lines) + "\n"
+
+
+def write_rules(text):
+    os.makedirs(CONF, exist_ok=True)
+    if text is None:
+        try:
+            os.remove(RULES)
+        except FileNotFoundError:
+            pass
+    else:
+        with open(RULES, "w") as f:
+            f.write(text)
+    subprocess.run(["mmsg", "dispatch", "reload_config"])
+
+
+class Scale(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Desktop Scale")
+        self.pending = None
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10,
+                      margin_top=16, margin_bottom=16, margin_start=16, margin_end=16)
+        self.set_child(box)
+
+        now = current()
+        self.picks = {}
+        first = None
+        for key, title, _ in SCREENS:
+            head = Gtk.Label(label=title, xalign=0)
+            head.add_css_class("head")
+            box.append(head)
+            dd = Gtk.DropDown.new_from_strings([label_of(s) for s in SCALES])
+            nearest = min(range(len(SCALES)), key=lambda i: abs(SCALES[i] - now[key]))
+            dd.set_selected(nearest)
+            box.append(dd)
+            self.picks[key] = dd
+            first = first or dd
+
+        foot = Gtk.Box(spacing=10, margin_top=8)
+        self.status = Gtk.Label(xalign=0, hexpand=True, wrap=True)
+        self.keep = Gtk.Button(label="Keep", visible=False)
+        self.keep.connect("clicked", self.on_keep)
+        go = Gtk.Button(label="Apply")
+        go.add_css_class("apply")
+        go.connect("clicked", self.on_apply)
+        foot.append(self.status)
+        foot.append(self.keep)
+        foot.append(go)
+        box.append(foot)
+
+        self.present()
+        first.grab_focus()
+
+    def on_apply(self, _button):
+        if self.pending:
+            self.on_keep(None)
+        try:
+            with open(RULES) as f:
+                before = f.read()
+        except OSError:
+            before = None
+        scales = {key: SCALES[self.picks[key].get_selected()] for key, _, _ in SCREENS}
+        write_rules(rules_for(scales))
+        timer = GLib.timeout_add_seconds(1, self.tick)
+        self.pending = [before, timer, KEEP_SECONDS]
+        self.keep.set_visible(True)
+        self.keep.grab_focus()
+        self.tick(count=False)
+
+    def tick(self, count=True):
+        if not self.pending:
+            return False
+        if count:
+            self.pending[2] -= 1
+        if self.pending[2] <= 0:
+            before = self.pending[0]
+            self.pending = None
+            self.keep.set_visible(False)
+            write_rules(before)
+            self.say("Not kept - back to the previous scale")
+            return False
+        self.say(f"Keep this scale? Going back in {self.pending[2]} s", warn=True)
+        return True
+
+    def on_keep(self, _button):
+        if self.pending:
+            GLib.source_remove(self.pending[1])
+            self.pending = None
+        self.keep.set_visible(False)
+        self.say("Kept")
+
+    def say(self, text, warn=False):
+        self.status.set_text(text)
+        if warn:
+            self.status.add_css_class("warn")
+        else:
+            self.status.remove_css_class("warn")
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+    def do_close_request(self):
+        if self.pending:
+            GLib.source_remove(self.pending[1])
+            write_rules(self.pending[0])
+            self.pending = None
+        return False
+
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:
+        win.present()
+        return
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):
+        provider.load_from_string(APP_CSS)
+    else:
+        provider.load_from_data(APP_CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    Scale(app)
+
+
+app = Gtk.Application(application_id="org.armbian.RotateScale")
+app.connect("activate", on_activate)
+app.run(None)

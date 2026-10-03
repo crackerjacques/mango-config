@@ -1,5 +1,5 @@
-/* mangobar color theme: nord. Read by rgds-bar-settings; copy this
-   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+/* mangobar color theme: nord. Read by rotate-bar-settings; copy this
+   file to ~/.config/rotate-bar/themes/<name>.css to make your own. */
 @define-color base     #3b4252;  /* plain module background */
 @define-color text     #eceff4;  /* text on base */
 @define-color ink      #2e3440;  /* text on colored pills */

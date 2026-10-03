@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+
+import json
+import os
+import re
+import subprocess
+import time
+
+CONFIG = os.path.expanduser("~/.config/mango/rofi/config.rasi")
+
+subprocess.run(["pkill", "-x", "rofi"])
+for _ in range(20):
+    if subprocess.run(["pgrep", "-x", "rofi"], stdout=subprocess.DEVNULL).returncode:
+        break
+    time.sleep(0.05)
+
+scale = 1.0
+try:
+    out = subprocess.run(["mmsg", "get", "all-monitors"], capture_output=True, text=True).stdout
+    for m in json.loads(out)["monitors"]:
+        if m.get("active"):
+            scale = float(m.get("scale") or 1)
+except (OSError, ValueError, KeyError):
+    pass
+
+cmd = ["rofi", "-config", CONFIG, "-show", "drun"]
+if scale < 1:
+    try:
+        with open(CONFIG) as f:
+            font = re.search(r'font:\s*"(.*?)\s+(\d+(?:\.\d+)?)"', f.read())
+    except OSError:
+        font = None
+    if font:
+        cmd += ["-font", f"{font.group(1)} {round(float(font.group(2)) / scale)}"]
+os.execvp("rofi", cmd)

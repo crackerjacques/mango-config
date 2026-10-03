@@ -1,5 +1,5 @@
-/* mangobar color theme: tokyo-night. Read by rgds-bar-settings; copy this
-   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+/* mangobar color theme: tokyo-night. Read by rotate-bar-settings; copy this
+   file to ~/.config/rotate-bar/themes/<name>.css to make your own. */
 @define-color base     #292e42;  /* plain module background */
 @define-color text     #c0caf5;  /* text on base */
 @define-color ink      #1a1b26;  /* text on colored pills */

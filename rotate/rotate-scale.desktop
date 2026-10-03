@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Desktop Scale
+Comment=Scale the screen down for more room, or back up for bigger text
+Exec=rotate-scale
+Icon=rotate-scale
+Categories=Settings;
