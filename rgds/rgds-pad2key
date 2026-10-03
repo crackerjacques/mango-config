@@ -6,6 +6,8 @@
 #  - L2/R2: Super+F2 / Super+F1 (thunar / rgds-cheatsheet in bind.conf)
 #  - R3/L3: Tab / Shift+Tab
 #  - SELECT: Super+Space (focus the other screen)
+#  - START tapped on its own: Super+F3 (rofi). Held, START is Super for the
+#    START + button chords.
 
 import time, select, evdev
 from evdev import ecodes as e, UInput
@@ -32,6 +34,13 @@ COMBO = {
     e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
 }
 ALL = set(MAP) | set(COMBO)
+
+# START pressed and released with no other button in between. Sent as its own
+# chord rather than leaving bind.conf to react to a bare Super release: with
+# fcitx5 running, every Super press/release the compositor does not use is
+# handed to the input method and replayed back, which looked like a lone
+# Super tap and opened rofi on every START + button chord.
+START_TAP = (e.KEY_LEFTMETA, e.KEY_F3)
 
 # The buttons are split over two devices (gpio-keys pad, adc-keys HOME), so any
 # device carrying a mapped code is taken. Anything with axes is skipped: that
@@ -62,12 +71,20 @@ while not devs:
 _keys = set(MAP.values())
 for _seq in COMBO.values():
     _keys.update(_seq)
+_keys.update(START_TAP)
 
 ui = UInput({e.EV_KEY: sorted(_keys)}, name="rgds-pad2key")
 
 # Keys this process is currently holding down, per source. A device can vanish
 # mid-press, and without this the virtual keyboard keeps the key down for good.
 held = {}
+
+def tap(seq):
+    for k in seq: ui.write(e.EV_KEY, k, 1)
+    for k in reversed(seq): ui.write(e.EV_KEY, k, 0)
+    ui.syn()
+
+start_alone = False
 
 def drop(fd):
     for k in held.pop(fd, ()):
@@ -93,12 +110,11 @@ while True:
         for ev in events:
             if ev.type != e.EV_KEY:
                 continue
+            if ev.value == 1 and ev.code in ALL:
+                start_alone = ev.code == e.BTN_START
             if ev.code in COMBO:
                 if ev.value == 1:
-                    seq = COMBO[ev.code]
-                    for k in seq: ui.write(e.EV_KEY, k, 1)
-                    for k in reversed(seq): ui.write(e.EV_KEY, k, 0)
-                    ui.syn()
+                    tap(COMBO[ev.code])
             elif ev.code in MAP:
                 k = MAP[ev.code]
                 if ev.value == 1:
@@ -107,3 +123,6 @@ while True:
                     held.get(fd, set()).discard(k)
                 ui.write(e.EV_KEY, k, ev.value)
                 ui.syn()
+                if ev.code == e.BTN_START and ev.value == 0 and start_alone:
+                    start_alone = False
+                    tap(START_TAP)
