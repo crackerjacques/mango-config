@@ -23,7 +23,7 @@ ROWS = [
     ("X", "Close window", None),
     ("A / B", "Enter / Esc", None),
     ("Y", "Backspace", None),
-    ("HOME (adc)", "Input method on / off", ["fcitx5-remote", "-t"]),
+    ("HOME (gpio)", "Input method on / off", ["fcitx5-remote", "-t"]),
     ("D-pad", "Arrow keys", None),
     ("L3 / R3", "Shift+Tab / Tab", None),
     ("PLAY", "Play / pause", None),

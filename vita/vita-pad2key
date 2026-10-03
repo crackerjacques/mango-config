@@ -7,7 +7,8 @@
 #  - R3/L3: Tab / Shift+Tab
 #  - SELECT: Super+Space (screen off in bind.conf)
 #  - Y: Backspace
-#  - the adc HOME key (BTN_Z): F13, input method on/off (bind.conf)
+#  - the gpio HOME key (BTN_MODE): F13, input method on/off (bind.conf);
+#    the adc one (BTN_Z) switches windows
 
 import time, select, evdev
 from evdev import ecodes as e, UInput
@@ -21,11 +22,11 @@ MAP = {
     e.BTN_WEST:   e.KEY_BACKSPACE,
     e.BTN_START:  e.KEY_LEFTMETA,
     e.BTN_THUMBR: e.KEY_TAB,
-    e.BTN_Z:      e.KEY_F13,
+    e.BTN_MODE:   e.KEY_F13,
 }
 
 COMBO = {
-    e.BTN_MODE:   (e.KEY_LEFTALT,   e.KEY_TAB),
+    e.BTN_Z:      (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
     e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
     e.BTN_SELECT: (e.KEY_LEFTMETA,  e.KEY_SPACE),
