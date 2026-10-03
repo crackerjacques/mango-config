@@ -19,7 +19,8 @@ swaync -c ~/.config/mango/swaync/config.jsonc -s ~/.config/mango/swaync/style.cs
 sh ~/.config/mango/scripts/wallpaper.sh >/dev/null 2>&1 &
 
 # top bar
-mangobar -c ~/.config/mango/mangobar/config.jsonc -s ~/.config/mango/mangobar/style.css 2>&1 &
+# vita-bar picks the settings from vita-bar-settings, or the stock config
+vita-bar >/dev/null 2>&1 &
 
 # xwayland dpi scale
 echo "Xft.dpi: 140" | xrdb -merge #dpi缩放

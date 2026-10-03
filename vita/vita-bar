@@ -1,0 +1,16 @@
+#!/bin/sh
+# RG Vita Pro: (re)start mangobar. Uses what vita-bar-settings wrote to
+# ~/.config/vita-bar, or the stock config in the mango config until then.
+#   vita-bar           restart it
+#   vita-bar --toggle  stop it if it runs, start it if not (Super+h)
+u=${XDG_CONFIG_HOME:-$HOME/.config}/vita-bar
+m=$HOME/.config/mango/mangobar
+cfg=$m/config.jsonc
+css=$m/style.css
+[ -f "$u/config.jsonc" ] && cfg=$u/config.jsonc
+[ -f "$u/style.css" ] && css=$u/style.css
+
+if pkill -x mangobar && [ "$1" = --toggle ]; then
+	exit 0
+fi
+exec mangobar -c "$cfg" -s "$css"

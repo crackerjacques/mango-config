@@ -29,6 +29,7 @@ ROWS = [
     ("PLAY", "Play / pause", None),
     ("POWER", "Power menu", ["vita-logout"]),
     ("", "Brightness", ["vita-brightness"]),
+    ("", "Bar settings", ["vita-bar-settings"]),
     ("", "Wallpaper", ["vita-wallpaper"]),
     ("", "Files", ["thunar"]),
 ]

@@ -73,6 +73,8 @@ The analog sticks are left alone and always work as a gamepad.
 | `vita-cheatsheet` | Controls list; tap a row to run it |
 | `vita-wallpaper` | Pick the wallpaper and its layout (fill, fit, stretch, center, tile) |
 | `vita-brightness` | Screen brightness slider (there are no brightness keys) |
+| `vita-bar-settings` | mangobar theme, shape and contents, for the panel and an external screen |
+| `vita-bar`, `vita-bar-sensor` | Start mangobar with those settings; sensor readings for it |
 | `install.sh` | Puts the above in `/usr/bin` and leaves a short power-key press to mango |
 
 ## Display
