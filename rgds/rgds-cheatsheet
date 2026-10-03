@@ -28,7 +28,7 @@ ROWS = [
     ("X", "Close window", None),
     ("A / B", "Enter / Esc", None),
     ("Y", "Home", None),
-    ("START + Y", "Japanese input on / off", ["fcitx5-remote", "-t"]),
+    ("HOME (gpio)", "Japanese input on / off", ["rgds-ime"]),
     ("D-pad", "Arrow keys", None),
     ("HOME/Return", "Shift+Tab / Tab", None),
     ("POWER", "Power menu", ["rgds-logout"]),

@@ -29,7 +29,9 @@ echo "Xft.dpi: 140" | xrdb -merge #dpi缩放
 # xrdb merge ~/.Xresources >/dev/null 2>&1
 
 # ime input
-fcitx5 --replace -d >/dev/null 2>&1 &
+# fcitx5 is not started here: rgds-ime (gpio HOME key) runs it only while
+# Japanese input is wanted, since the START chords misfire with it up
+# fcitx5 --replace -d >/dev/null 2>&1 &
 
 # keep clipboard content
 wl-clip-persist --clipboard regular --reconnect-tries 0 >/dev/null 2>&1 &
