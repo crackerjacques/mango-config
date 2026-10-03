@@ -1,0 +1,32 @@
+diff --git a/src/input/keyboard.c b/src/input/keyboard.c
+index 12545f4..9eedc57 100644
+--- a/src/input/keyboard.c
++++ b/src/input/keyboard.c
+@@ -709,14 +709,25 @@ void handle_keyboard_key(struct wl_listener *listener, void *data) {
+ 		pointer_hide_cursor(NULL);
+ 	}
+ 
++	// Keys from the input method's own virtual keyboard are ones it took from
++	// a keyboard grab and is handing back: they already went through the
++	// bindings below before being forwarded to it. Checking them again fires
++	// bindings twice, and a replayed lone modifier press/release (e.g. the
++	// Super of an already handled Super+key) looks like a bare-modifier tap
++	// to a release binding such as bindr=Super,Super_L.
++	bool im_replay = server.input_method_relay &&
++					 is_keyboard_emulated_by_input_method(
++						 group->virtual_keyboard,
++						 server.input_method_relay->input_method);
++
+ 	if (event->state == WL_KEYBOARD_KEY_STATE_RELEASED) {
+ 		server.tag_combo = false;
+-	} else {
++	} else if (!im_replay) {
+ 		// Avoids normal bindings affecting a bare mode-key binding.
+ 		server.last_hold_keycode = keycode;
+ 	}
+ 
+-	for (i = 0; i < nsyms; i++)
++	for (i = 0; i < nsyms && !im_replay; i++)
+ 		handled = keyboard_check_keybinding(event->state, server.session_locked,
+ 											mods, syms[i], keycode) ||
+ 				  handled;

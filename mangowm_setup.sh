@@ -6,6 +6,7 @@ set -eu
 SRC=$HOME/src/mango-build
 CONFIG_REPO=https://github.com/crackerjacques/mango-config.git
 CONFIG_BRANCH=anbernic-rg-rotate
+RAW=https://raw.githubusercontent.com/crackerjacques/mango-config/$CONFIG_BRANCH
 JOBS=$(nproc)
 
 say() { printf '\n\033[1;33m==> %s\033[0m\n' "$*"; }
@@ -68,7 +69,14 @@ step_scenefx() {
 
 step_mango() {
 	say "mango"
+	# drop the patch applied by an earlier run so the pull can fast-forward
+	[ -d "$SRC/mango/.git" ] && git -C "$SRC/mango" reset -q --hard
 	fetch https://github.com/mangowm/mango.git mango
+	# keys fcitx5 hands back from its keyboard grab must not hit the
+	# keybindings a second time (opened rofi on every START chord)
+	curl -fsSL -o "$SRC/mango-im-replay-no-rebind.patch" \
+		"$RAW/patches/mango-im-replay-no-rebind.patch"
+	git -C "$SRC/mango" apply "$SRC/mango-im-replay-no-rebind.patch"
 	build mango
 	# the session file lands in /usr/local/share; make sure login screens that
 	# only look in /usr/share see it too
@@ -123,6 +131,70 @@ step_config() {
 	fi
 }
 
+# fcitx5 engine picked at the start (choose_ime) and the package that has it
+IME=""
+IME_PKG=""
+
+choose_ime() {
+	cat <<EOF
+  Input method (fcitx5) for typing other languages:
+    0) none
+    1) Japanese             日本語      Mozc
+    2) Chinese, Simplified  简体中文    Pinyin
+    3) Chinese, Traditional 繁體中文    Chewing
+    4) Korean               한국어      Hangul
+    5) Vietnamese           Tiếng Việt  Unikey
+
+EOF
+	read -r -p "Choose [0-5] (0): " n </dev/tty
+	case "$n" in
+		1) IME=mozc;    IME_PKG=fcitx5-mozc ;;
+		2) IME=pinyin;  IME_PKG=fcitx5-chinese-addons ;;
+		3) IME=chewing; IME_PKG=fcitx5-chewing ;;
+		4) IME=hangul;  IME_PKG=fcitx5-hangul ;;
+		5) IME=unikey;  IME_PKG=fcitx5-unikey ;;
+		*) IME="" ;;
+	esac
+}
+
+step_ime() {
+	if [ -z "$IME" ]; then
+		say "input method: none"
+		return 0
+	fi
+	say "input method: fcitx5 + $IME"
+	sudo apt-get install -y fcitx5 fcitx5-config-qt fonts-noto-cjk "$IME_PKG"
+
+	# fcitx5 only offers what is in its input method group, and its settings
+	# window does not fit these screens - so write the group here. fcitx5
+	# rewrites this file when it exits, so make sure it is not running.
+	fcitx5-remote -e 2>/dev/null || true
+	for _ in 1 2 3 4 5 6 7 8 9 10; do
+		pgrep -x fcitx5 >/dev/null || break
+		sleep 0.3
+	done
+	local profile=$HOME/.config/fcitx5/profile
+	mkdir -p "${profile%/*}"
+	cat >"$profile" <<EOF
+[Groups/0]
+Name=Default
+Default Layout=us
+DefaultIM=$IME
+
+[Groups/0/Items/0]
+Name=keyboard-us
+Layout=
+
+[Groups/0/Items/1]
+Name=$IME
+Layout=
+
+[GroupOrder]
+0=Default
+EOF
+	echo "fcitx5 starts with mango; START + d-pad up switches the input method on and off."
+}
+
 step_board() {
 	say "RG Rotate helpers (pad2key, lid, power menu)"
 	sudo sh "$HOME/.config/mango/rotate/install.sh"
@@ -148,7 +220,7 @@ CONF
 	echo "/etc/sddm.conf.d/autologin.conf (delete it to get the login screen back)."
 }
 
-ALL="deps wlroots scenefx mango foot extras rust config board autologin"
+ALL="deps wlroots scenefx mango foot extras rust config ime board autologin"
 
 [ "$(id -u)" -ne 0 ] || { echo "run as the desktop user, not root" >&2; exit 1; }
 
@@ -179,6 +251,9 @@ cat <<EOF
   Sources go to $SRC. This takes a long time on the RG Rotate.
 
 EOF
+case " ${*:-$ALL} " in
+	*" ime "*) choose_ime; echo ;;
+esac
 read -r -p "Proceed? (N/y) " answer </dev/tty
 case "$answer" in
 	[yY]*) ;;

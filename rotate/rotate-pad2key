@@ -10,7 +10,7 @@ MAP = {
     e.BTN_DPAD_LEFT: e.KEY_LEFT, e.BTN_DPAD_RIGHT: e.KEY_RIGHT,
     e.BTN_SOUTH:  e.KEY_ESC,
     e.BTN_EAST:   e.KEY_ENTER,
-    e.BTN_WEST:   e.KEY_HOME,
+    e.BTN_WEST:   e.KEY_BACKSPACE,
     e.BTN_START:  e.KEY_LEFTMETA,
     e.BTN_THUMBR: e.KEY_TAB,
 }
