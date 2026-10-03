@@ -6,7 +6,8 @@
 #  - L2/R2: Super+F2 / Super+F1 (thunar / rgds-cheatsheet in bind.conf)
 #  - R3/L3: Tab / Shift+Tab
 #  - SELECT: Super+Space (focus the other screen)
-#  - the gpio HOME key (KEY_HOME): F13, Japanese input on/off (rgds-ime)
+#  - Y: Backspace
+#  - the gpio HOME key (KEY_HOME): F13, input method on/off (bind.conf)
 
 import time, select, evdev
 from evdev import ecodes as e, UInput
@@ -17,7 +18,7 @@ MAP = {
     e.BTN_DPAD_LEFT: e.KEY_LEFT, e.BTN_DPAD_RIGHT: e.KEY_RIGHT,
     e.BTN_SOUTH:  e.KEY_ENTER,
     e.BTN_EAST:   e.KEY_ESC,
-    e.BTN_WEST:   e.KEY_HOME,
+    e.BTN_WEST:   e.KEY_BACKSPACE,
     e.BTN_START:  e.KEY_LEFTMETA,
     e.BTN_THUMBR: e.KEY_TAB,
     e.KEY_HOME:   e.KEY_F13,

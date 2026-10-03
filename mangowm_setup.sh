@@ -18,13 +18,12 @@ fetch() {
 		git clone -q "$1" "$SRC/$2"
 	fi
 	[ -n "${3:-}" ] && git -C "$SRC/$2" checkout -q "$3"
-	# a tag leaves HEAD detached and needs no pull; a branch does
 	if git -C "$SRC/$2" symbolic-ref -q HEAD >/dev/null; then
 		git -C "$SRC/$2" pull -q --ff-only
 	fi
 }
 
-# meson build + install of $SRC/<dir> into /usr/local
+# meson build
 build() {
 	local dir=$SRC/$1; shift
 	rm -rf "$dir/build"
@@ -69,17 +68,13 @@ step_scenefx() {
 
 step_mango() {
 	say "mango"
-	# drop the patch applied by an earlier run so the pull can fast-forward
 	[ -d "$SRC/mango/.git" ] && git -C "$SRC/mango" reset -q --hard
 	fetch https://github.com/mangowm/mango.git mango
-	# keys fcitx5 hands back from its keyboard grab must not hit the
-	# keybindings a second time (opened rofi on every START chord)
 	curl -fsSL -o "$SRC/mango-im-replay-no-rebind.patch" \
 		"$RAW/patches/mango-im-replay-no-rebind.patch"
 	git -C "$SRC/mango" apply "$SRC/mango-im-replay-no-rebind.patch"
 	build mango
-	# the session file lands in /usr/local/share; make sure login screens that
-	# only look in /usr/share see it too
+
 	sudo mkdir -p /usr/share/wayland-sessions
 	sudo ln -sf /usr/local/share/wayland-sessions/mango.desktop /usr/share/wayland-sessions/
 }
@@ -131,6 +126,66 @@ step_config() {
 	fi
 }
 
+# fcitx5
+IME=""
+IME_PKG=""
+
+choose_ime() {
+	cat <<EOF
+  Input method (fcitx5) for typing other languages:
+    0) none
+    1) Japanese             日本語      Mozc
+    2) Chinese, Simplified  简体中文    Pinyin
+    3) Chinese, Traditional 繁體中文    Chewing
+    4) Korean               한국어      Hangul
+    5) Vietnamese           Tiếng Việt  Unikey
+
+EOF
+	read -r -p "Choose [0-5] (0): " n </dev/tty
+	case "$n" in
+		1) IME=mozc;    IME_PKG=fcitx5-mozc ;;
+		2) IME=pinyin;  IME_PKG=fcitx5-chinese-addons ;;
+		3) IME=chewing; IME_PKG=fcitx5-chewing ;;
+		4) IME=hangul;  IME_PKG=fcitx5-hangul ;;
+		5) IME=unikey;  IME_PKG=fcitx5-unikey ;;
+		*) IME="" ;;
+	esac
+}
+
+step_ime() {
+	if [ -z "$IME" ]; then
+		say "input method: none"
+		return 0
+	fi
+	say "input method: fcitx5 + $IME"
+	sudo apt-get install -y fcitx5 fcitx5-config-qt fonts-noto-cjk "$IME_PKG"
+	fcitx5-remote -e 2>/dev/null || true
+	for _ in 1 2 3 4 5 6 7 8 9 10; do
+		pgrep -x fcitx5 >/dev/null || break
+		sleep 0.3
+	done
+	local profile=$HOME/.config/fcitx5/profile
+	mkdir -p "${profile%/*}"
+	cat >"$profile" <<EOF
+[Groups/0]
+Name=Default
+Default Layout=us
+DefaultIM=$IME
+
+[Groups/0/Items/0]
+Name=keyboard-us
+Layout=
+
+[Groups/0/Items/1]
+Name=$IME
+Layout=
+
+[GroupOrder]
+0=Default
+EOF
+	echo "fcitx5 starts with mango; the side HOME key switches the input method on and off."
+}
+
 step_board() {
 	say "RG DS helpers (pad2key, touch, power menu)"
 	sudo sh "$HOME/.config/mango/rgds/install.sh"
@@ -156,7 +211,7 @@ CONF
 	echo "/etc/sddm.conf.d/autologin.conf (delete it to get the login screen back)."
 }
 
-ALL="deps wlroots scenefx mango foot extras rust config board autologin"
+ALL="deps wlroots scenefx mango foot extras rust config ime board autologin"
 
 [ "$(id -u)" -ne 0 ] || { echo "run as the desktop user, not root" >&2; exit 1; }
 
@@ -186,6 +241,9 @@ cat <<EOF
   Sources go to $SRC. This takes a long time on the RG DS.
 
 EOF
+case " ${*:-$ALL} " in
+	*" ime "*) choose_ime; echo ;;
+esac
 read -r -p "Proceed? (N/y) " answer </dev/tty
 case "$answer" in
 	[yY]*) ;;
