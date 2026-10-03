@@ -3,9 +3,12 @@
 # the bsp's /usr/bin/rgds-pad2key. install.sh puts it over that file and the
 # existing rgds-pad2key.service runs it unchanged.
 #  - L1/R1: Super+PageUp / Super+PageDown (wvkbd / foot in bind.conf)
-#  - L2/R2: Super+F2 / Super+F1 (thunar / rgds-cheatsheet in bind.conf)
+#  - L2: held Super+Shift, so L2 + d-pad swaps the window with its neighbour
+#    (exchange_client); R2: Super+F1 (rgds-cheatsheet in bind.conf)
 #  - R3/L3: Tab / Shift+Tab
-#  - SELECT: Super+Space (focus the other screen)
+#  - SELECT: held Alt, so SELECT + d-pad moves focus to the next window, or
+#    to the other screen when there is none that way (focusdir with
+#    focus_cross_monitor); START + SELECT is screen off in bind.conf
 #  - Y: Backspace
 #  - the gpio HOME key (KEY_HOME): F13, input method on/off (bind.conf)
 
@@ -20,6 +23,7 @@ MAP = {
     e.BTN_EAST:   e.KEY_ESC,
     e.BTN_WEST:   e.KEY_BACKSPACE,
     e.BTN_START:  e.KEY_LEFTMETA,
+    e.BTN_SELECT: e.KEY_LEFTALT,
     e.BTN_THUMBR: e.KEY_TAB,
     e.KEY_HOME:   e.KEY_F13,
 }
@@ -28,13 +32,17 @@ COMBO = {
     e.BTN_MODE:   (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
     e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
-    e.BTN_SELECT: (e.KEY_LEFTMETA,  e.KEY_SPACE),
-    e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_F2),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
     e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
 }
-ALL = set(MAP) | set(COMBO)
+# Held for as long as the button is: modifiers pressed in this order and
+# released in reverse, so Super is never the last key down and letting go of
+# the button is not taken for a bare Super tap (rofi).
+HOLD = {
+    e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFTSHIFT),
+}
+ALL = set(MAP) | set(COMBO) | set(HOLD)
 # Devices are picked by the gamepad buttons only: KEY_HOME is on the pad here,
 # but also on every keyboard, whose Home key must stay a Home key.
 PAD = {c for c in ALL if c != e.KEY_HOME}
@@ -66,7 +74,7 @@ while not devs:
         time.sleep(2)
 
 _keys = set(MAP.values())
-for _seq in COMBO.values():
+for _seq in list(COMBO.values()) + list(HOLD.values()):
     _keys.update(_seq)
 
 ui = UInput({e.EV_KEY: sorted(_keys)}, name="rgds-pad2key")
@@ -107,6 +115,15 @@ while True:
             if ev.code in COMBO:
                 if ev.value == 1:
                     tap(COMBO[ev.code])
+            elif ev.code in HOLD:
+                seq = HOLD[ev.code]
+                if ev.value == 1:
+                    held.setdefault(fd, set()).update(seq)
+                    for k in seq: ui.write(e.EV_KEY, k, 1)
+                elif ev.value == 0:
+                    held.get(fd, set()).difference_update(seq)
+                    for k in reversed(seq): ui.write(e.EV_KEY, k, 0)
+                ui.syn()
             elif ev.code in MAP:
                 k = MAP[ev.code]
                 if ev.value == 1:

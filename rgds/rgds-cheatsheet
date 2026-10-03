@@ -18,9 +18,10 @@ ROWS = [
     ("START", "App menu (tap)", ["rgds-rofi"]),
     ("L1", "On-screen keyboard", ["sh", "-c", WVKBD]),
     ("R1", "Terminal", ["foot"]),
-    ("L2", "Files", ["thunar"]),
+    ("L2 + D-pad", "Swap the window with the one that way", None),
     ("R2", "This cheat sheet", None),
-    ("SELECT", "Focus the other screen", ["mmsg", "dispatch", "focusmon,next"]),
+    ("SELECT + D-pad", "Focus the next window that way, or the other screen", None),
+    ("START + SELECT", "Screen off (any button wakes)", ["rgds-screenoff"]),
     ("START + ←/→", "Previous / next desktop", None),
     ("START + ↑/↓", "Send window to top / bottom screen", None),
     ("HOME", "Switch window", None),
@@ -31,10 +32,10 @@ ROWS = [
     ("D-pad", "Arrow keys", None),
     ("HOME/Return", "Shift+Tab / Tab", None),
     ("POWER", "Power menu", ["rgds-logout"]),
+    ("", "Files", ["thunar"]),
     ("", "Brightness", ["rgds-brightness"]),
     ("", "Bar settings", ["rgds-bar-settings"]),
     ("", "Desktop scale", ["rgds-scale"]),
-    ("", "Screen off (any button wakes)", ["rgds-screenoff"]),
 ]
 
 CSS = """
