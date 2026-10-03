@@ -34,6 +34,7 @@ ROWS = [
     ("POWER", "Power menu", ["rgds-logout"]),
     ("", "Brightness", ["rgds-brightness"]),
     ("", "Bar settings", ["rgds-bar-settings"]),
+    ("", "Desktop scale", ["rgds-scale"]),
     ("", "Screen off (any button wakes)", ["rgds-screenoff"]),
 ]
 

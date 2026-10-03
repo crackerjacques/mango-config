@@ -94,13 +94,12 @@ DEFAULTS = {
 }
 
 APP_CSS = """
-window { background: #201b14; }
-label { color: #d1b88e; font-family: Hack; font-size: 15px; }
-label.head { color: #ac9259; font-weight: bold; }
-label.warn { color: #ef2929; }
+label { font-family: Hack; font-size: 15px; }
+label.head { color: #6b5320; font-weight: bold; }
+label.warn { color: #c01c28; }
 checkbutton label { font-size: 14px; }
 button.apply { background: #ac9259; background-image: none; }
-button.apply label { color: #201b14; font-weight: bold; }
+button.apply label { color: #000000; font-weight: bold; }
 """
 
 

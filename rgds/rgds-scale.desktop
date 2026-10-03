@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Desktop Scale
+Comment=Scale each screen down for more room, or back up for bigger text
+Exec=rgds-scale
+Icon=rgds-scale
+Categories=Settings;
