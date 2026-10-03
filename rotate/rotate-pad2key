@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # RG Rotate: gamepad buttons -> keyboard keys (evdev/uinput, X11/Wayland-safe).
+#  - SELECT: held Alt, so SELECT + d-pad moves focus to the next window
+#    (Alt+arrows, focusdir); START + SELECT opens Lid Settings (bind.conf)
+#  - L2: held Super+Shift, so L2 + d-pad swaps the window with its neighbour
+#    (exchange_client)
 
 import time, select, evdev
 from evdev import ecodes as e, UInput
@@ -12,19 +16,24 @@ MAP = {
     e.BTN_EAST:   e.KEY_ENTER,
     e.BTN_WEST:   e.KEY_BACKSPACE,
     e.BTN_START:  e.KEY_LEFTMETA,
+    e.BTN_SELECT: e.KEY_LEFTALT,
     e.BTN_THUMBR: e.KEY_TAB,
 }
 
 COMBO = {
     e.BTN_MODE:   (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
-    e.BTN_SELECT: (e.KEY_LEFTMETA,  e.KEY_SPACE),
-    e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFT),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
     e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
 }
-ALL = set(MAP) | set(COMBO)
+# Held for as long as the button is: modifiers pressed in this order and
+# released in reverse, so Super is never the last key down and letting go of
+# the button is not taken for a bare Super tap (rofi).
+HOLD = {
+    e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFTSHIFT),
+}
+ALL = set(MAP) | set(COMBO) | set(HOLD)
 
 REQUIRED = {e.BTN_DPAD_UP, e.BTN_DPAD_DOWN, e.BTN_DPAD_LEFT, e.BTN_DPAD_RIGHT,
             e.BTN_SOUTH, e.BTN_EAST}
@@ -54,7 +63,7 @@ while not devs:
         time.sleep(2)
 
 _keys = set(MAP.values())
-for _seq in COMBO.values():
+for _seq in list(COMBO.values()) + list(HOLD.values()):
     _keys.update(_seq)
 
 ui = UInput({e.EV_KEY: sorted(_keys)}, name="rotate-pad2key")
@@ -95,6 +104,15 @@ while True:
                     for k in seq: ui.write(e.EV_KEY, k, 1)
                     for k in reversed(seq): ui.write(e.EV_KEY, k, 0)
                     ui.syn()
+            elif ev.code in HOLD:
+                seq = HOLD[ev.code]
+                if ev.value == 1:
+                    held.setdefault(fd, set()).update(seq)
+                    for k in seq: ui.write(e.EV_KEY, k, 1)
+                elif ev.value == 0:
+                    held.get(fd, set()).difference_update(seq)
+                    for k in reversed(seq): ui.write(e.EV_KEY, k, 0)
+                ui.syn()
             elif ev.code in MAP:
                 k = MAP[ev.code]
                 if ev.value == 1:
