@@ -1,5 +1,5 @@
-/* mangobar color theme: catppuccin. Read by rgds-bar-settings; copy this
-   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+/* mangobar color theme: catppuccin. Read by vita-bar-settings; copy this
+   file to ~/.config/vita-bar/themes/<name>.css to make your own. */
 @define-color base     #313244;  /* plain module background */
 @define-color text     #cdd6f4;  /* text on base */
 @define-color ink      #1e1e2e;  /* text on colored pills */

@@ -1,0 +1,15 @@
+/* mangobar color theme: white. Read by vita-bar-settings; copy this
+   file to ~/.config/vita-bar/themes/<name>.css to make your own. */
+@define-color base     #f2f2f2;  /* plain module background */
+@define-color text     #1a1a1a;  /* text on base */
+@define-color ink      #1a1a1a;  /* text on colored pills */
+@define-color tag      #e6e6e6;  /* tag buttons */
+@define-color active   #2a2a2a;  /* focused tag, power */
+@define-color urgent   #e8b4b4;  /* urgent tag */
+@define-color accent1  #ececec;  /* volume, temperature */
+@define-color accent2  #e8e8e8;  /* battery, date, network, power draw */
+@define-color accent3  #f0f0f0;  /* clock, cpu, disk, uptime */
+@define-color accent4  #e4e4e4;  /* window title, layout, brightness */
+@define-color accent5  #eaeaea;  /* memory, wifi */
+@define-color fade     #ffffff;  /* gradient highlight */
+@define-color menu     #fafafa;  /* tray menu background */

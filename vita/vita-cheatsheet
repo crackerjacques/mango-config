@@ -8,11 +8,10 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Gdk, Gtk
 
 WVKBD = 'pkill -x wvkbd-mobintl || wvkbd-mobintl -L 300 -H 300 --fn "Sans 18" --landscape-layers full,special'
-ROFI = "rofi -config ~/.config/mango/rofi/config.rasi -show drun"
 
 # (button, what it does, command run on tap or None)
 ROWS = [
-    ("START", "App menu (tap)", ["sh", "-c", ROFI]),
+    ("START", "App menu (tap)", ["vita-rofi"]),
     ("L1", "On-screen keyboard", ["sh", "-c", WVKBD]),
     ("R1", "Terminal", ["foot"]),
     ("L2", "Previous desktop", ["mmsg", "dispatch", "viewtoleft,0"]),
@@ -30,6 +29,7 @@ ROWS = [
     ("POWER", "Power menu", ["vita-logout"]),
     ("", "Brightness", ["vita-brightness"]),
     ("", "Bar settings", ["vita-bar-settings"]),
+    ("", "Desktop scale", ["vita-scale"]),
     ("", "Wallpaper", ["vita-wallpaper"]),
     ("", "Files", ["thunar"]),
 ]

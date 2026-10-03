@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Desktop Scale
+Comment=Make everything bigger, or smaller for more room
+Exec=vita-scale
+Icon=vita-scale
+Categories=Settings;

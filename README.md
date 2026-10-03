@@ -75,14 +75,16 @@ The analog sticks are left alone and always work as a gamepad.
 | `vita-brightness` | Screen brightness slider (there are no brightness keys) |
 | `vita-bar-settings` | mangobar theme, shape and contents, for the panel and an external screen |
 | `vita-bar`, `vita-bar-sensor` | Start mangobar with those settings; sensor readings for it |
+| `vita-scale` | Desktop scale: 2.0 / 1.75 bigger, 1.5 default, 1.25 / 1.0 more room |
+| `vita-rofi` | Opens the app menu on the focused screen, closing one left open |
 | `install.sh` | Puts the above in `/usr/bin` and leaves a short power-key press to mango |
 
 ## Display
 
 The panel is mounted portrait and mango does not read the DRM
 panel-orientation property, so `monitor.conf` turns it with `rr:1` and scales
-it with `scale:1.5`. If the picture is upside down, use `rr:3`; change `scale`
-to taste.
+it with `scale:1.5`. If the picture is upside down, use `rr:3`. Pick another
+scale with Desktop Scale (`vita-scale`) rather than editing `monitor.conf`.
 
 ## mango patch
 

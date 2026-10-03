@@ -1,5 +1,5 @@
-/* mangobar color theme: gruvbox. Read by rgds-bar-settings; copy this
-   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+/* mangobar color theme: gruvbox. Read by vita-bar-settings; copy this
+   file to ~/.config/vita-bar/themes/<name>.css to make your own. */
 @define-color base     #504945;  /* plain module background */
 @define-color text     #ebdbb2;  /* text on base */
 @define-color ink      #1b1a1a;  /* text on colored pills */

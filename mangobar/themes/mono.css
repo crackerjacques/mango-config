@@ -1,5 +1,5 @@
-/* mangobar color theme: mono. Read by rgds-bar-settings; copy this
-   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+/* mangobar color theme: mono. Read by vita-bar-settings; copy this
+   file to ~/.config/vita-bar/themes/<name>.css to make your own. */
 @define-color base     #333333;  /* plain module background */
 @define-color text     #eeeeee;  /* text on base */
 @define-color ink      #111111;  /* text on colored pills */

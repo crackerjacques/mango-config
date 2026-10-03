@@ -1,5 +1,5 @@
-/* mangobar color theme: dracula. Read by rgds-bar-settings; copy this
-   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+/* mangobar color theme: dracula. Read by vita-bar-settings; copy this
+   file to ~/.config/vita-bar/themes/<name>.css to make your own. */
 @define-color base     #44475a;  /* plain module background */
 @define-color text     #f8f8f2;  /* text on base */
 @define-color ink      #282a36;  /* text on colored pills */
