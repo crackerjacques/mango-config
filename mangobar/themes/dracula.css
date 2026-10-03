@@ -1,0 +1,15 @@
+/* mangobar color theme: dracula. Read by rgds-bar-settings; copy this
+   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+@define-color base     #44475a;  /* plain module background */
+@define-color text     #f8f8f2;  /* text on base */
+@define-color ink      #282a36;  /* text on colored pills */
+@define-color tag      #383a4a;  /* tag buttons */
+@define-color active   #bd93f9;  /* focused tag, power */
+@define-color urgent   #ff5555;  /* urgent tag */
+@define-color accent1  #f1fa8c;  /* volume, temperature */
+@define-color accent2  #50fa7b;  /* battery, date, network, power draw */
+@define-color accent3  #8be9fd;  /* clock, cpu, disk, uptime */
+@define-color accent4  #ff79c6;  /* window title, layout, brightness */
+@define-color accent5  #ffb86c;  /* memory, wifi */
+@define-color fade     #f8f8f2;  /* gradient highlight */
+@define-color menu     #282a36;  /* tray menu background */

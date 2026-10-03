@@ -1,0 +1,15 @@
+/* mangobar color theme: catppuccin. Read by rgds-bar-settings; copy this
+   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+@define-color base     #313244;  /* plain module background */
+@define-color text     #cdd6f4;  /* text on base */
+@define-color ink      #1e1e2e;  /* text on colored pills */
+@define-color tag      #45475a;  /* tag buttons */
+@define-color active   #89b4fa;  /* focused tag, power */
+@define-color urgent   #f38ba8;  /* urgent tag */
+@define-color accent1  #f9e2af;  /* volume, temperature */
+@define-color accent2  #a6e3a1;  /* battery, date, network, power draw */
+@define-color accent3  #bac2de;  /* clock, cpu, disk, uptime */
+@define-color accent4  #cba6f7;  /* window title, layout, brightness */
+@define-color accent5  #94e2d5;  /* memory, wifi */
+@define-color fade     #f5e0dc;  /* gradient highlight */
+@define-color menu     #1e1e2e;  /* tray menu background */

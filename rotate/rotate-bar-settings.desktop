@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Bar Settings
+Comment=mangobar colors, shape and what the bar shows
+Exec=rotate-bar-settings
+Icon=rotate-bar-settings
+Categories=Settings;

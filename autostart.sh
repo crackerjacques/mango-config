@@ -19,7 +19,8 @@ wlsunset -T 3501 -t 3500 >/dev/null 2>&1 &
 sh ~/.config/mango/scripts/wallpaper.sh >/dev/null 2>&1 &
 
 # top bar
-mangobar -c ~/.config/mango/mangobar/config.jsonc -s ~/.config/mango/mangobar/style.css 2>&1 &
+# rotate-bar picks the settings from rotate-bar-settings, or the stock config
+rotate-bar >/dev/null 2>&1 &
 
 # xwayland dpi scale
 echo "Xft.dpi: 140" | xrdb -merge #dpi缩放

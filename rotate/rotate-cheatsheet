@@ -28,6 +28,7 @@ ROWS = [
     ("R3", "Tab", None),
     ("POWER", "Power menu", ["rotate-logout"]),
     ("", "Brightness", ["rotate-brightness"]),
+    ("", "Bar settings", ["rotate-bar-settings"]),
     ("", "Wallpaper", ["rotate-wallpaper"]),
     ("", "Files", ["thunar"]),
 ]

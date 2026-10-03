@@ -1,0 +1,15 @@
+/* mangobar color theme: mono. Read by rgds-bar-settings; copy this
+   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+@define-color base     #333333;  /* plain module background */
+@define-color text     #eeeeee;  /* text on base */
+@define-color ink      #111111;  /* text on colored pills */
+@define-color tag      #2a2a2a;  /* tag buttons */
+@define-color active   #dddddd;  /* focused tag, power */
+@define-color urgent   #ff5555;  /* urgent tag */
+@define-color accent1  #bbbbbb;  /* volume, temperature */
+@define-color accent2  #cccccc;  /* battery, date, network, power draw */
+@define-color accent3  #aaaaaa;  /* clock, cpu, disk, uptime */
+@define-color accent4  #dddddd;  /* window title, layout, brightness */
+@define-color accent5  #999999;  /* memory, wifi */
+@define-color fade     #ffffff;  /* gradient highlight */
+@define-color menu     #1a1a1a;  /* tray menu background */

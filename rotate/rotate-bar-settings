@@ -1,0 +1,511 @@
+#!/usr/bin/env python3
+# RG Rotate: mangobar look and content - color theme, shape, and what the bar
+# shows on the 720x720 panel.
+
+import json
+import os
+import re
+import subprocess
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, Gtk
+
+HOME = os.path.expanduser("~")
+CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.join(HOME, ".config"),
+                    "rotate-bar")
+STOCK = os.path.join(HOME, ".config/mango/mangobar")
+THEME_DIRS = [os.path.join(STOCK, "themes"), os.path.join(CONF, "themes")]
+
+KEYS = [
+    ("base", "Plain background"), ("text", "Text"), ("ink", "Text on colors"),
+    ("tag", "Tags"), ("active", "Focused tag"), ("urgent", "Urgent tag"),
+    ("accent1", "Accent 1 (volume)"), ("accent2", "Accent 2 (battery, date)"),
+    ("accent3", "Accent 3 (clock, cpu)"), ("accent4", "Accent 4 (title)"),
+    ("accent5", "Accent 5 (memory, wifi)"), ("fade", "Gradient light"),
+    ("menu", "Menu background"),
+]
+
+# (key, title, outputs, width in px - 0 when unknown)
+BARS = [("upper", "Bar", ["DSI-1"], 720)]
+
+MODULES = [
+    ("workspaces", "Tags", True, 80),
+    ("layout", "Layout", True, 40),
+    ("window", "Window title", True, 0),
+    ("tray", "Tray", False, 60),
+    ("pulseaudio", "Volume", False, 70),
+    ("backlight", "Brightness", False, 60),
+    ("battery", "Battery", False, 65),
+    ("network", "Network", False, 80),
+    ("cpu", "CPU", False, 60),
+    ("memory", "Memory", False, 60),
+    ("custom/temp", "Temperature", False, 55),
+    ("custom/watt", "Power draw", False, 60),
+    ("custom/wifi", "Wi-Fi", False, 55),
+    ("custom/disk", "Free disk", False, 60),
+    ("custom/uptime", "Uptime", False, 70),
+    ("custom/load", "Load", False, 50),
+    ("hideclients", "Hidden windows", False, 40),
+    ("clock#date", "Date", False, 55),
+    ("clock#time", "Time", False, 55),
+    ("custom/power", "Power menu", False, 30),
+]
+
+SENSORS = {
+    "custom/temp": ("temp", 10, " {}"),
+    "custom/watt": ("watt", 5, "\U000f140b {}"),
+    "custom/wifi": ("wifi", 10, "\U000f05a9 {}"),
+    "custom/disk": ("disk", 60, "\U000f02ca {}"),
+    "custom/uptime": ("uptime", 60, "\U000f0150 {}"),
+    "custom/load": ("load", 10, "\U000f061a {}"),
+}
+
+CORNERS = [("round", "Round", 100), ("rounded", "Slightly round", 8), ("square", "Square", 0)]
+FILLS = [("gradient", "Gradient"), ("flat", "Flat")]
+SIZES = [("small", "Small", 14, 6, 26), ("medium", "Medium", 17, 8, 30),
+         ("large", "Large", 20, 10, 34)]
+
+PILLS = [
+    ("#tags", "tag", "text"), ("#tags:hover", "accent4", "ink"),
+    ("#tags.active", "active", "ink"), ("#tags.occupied", "tag", "text"),
+    ("#tags.urgent", "urgent", "ink"), ("#tags.empty", "tag", "text"),
+    ("#overview", "active", "ink"), ("#layout", "accent4", "ink"),
+    ("#title", "accent4", "ink"), ("#clock", "accent3", "ink"),
+    ("#clock.date", "accent2", "ink"), ("#cpu", "accent3", "ink"),
+    ("#mem", "accent5", "ink"), ("#brightness", "accent4", "ink"),
+    ("#volume", "accent1", "ink"), ("#network", "accent2", "ink"),
+    ("#battery", "accent2", "ink"), ("#hideclients", "base", "text"),
+    ("#tray", "base", "text"), ("#custom-power", "active", "ink"),
+    ("#custom-temp", "accent1", "ink"), ("#custom-watt", "accent2", "ink"),
+    ("#custom-wifi", "accent5", "ink"), ("#custom-disk", "accent3", "ink"),
+    ("#custom-uptime", "accent3", "ink"), ("#custom-load", "accent3", "ink"),
+]
+
+DEFAULTS = {
+    "theme": "gruvbox",
+    "colors": {},
+    "corners": "round", "fill": "gradient", "size": "small",
+    "upper": {"on": True, "modules": ["workspaces", "window", "tray", "pulseaudio", "battery",
+                                      "clock#date", "clock#time", "custom/power"]},
+}
+
+APP_CSS = """
+window { background: #201b14; }
+label { color: #d1b88e; font-family: Hack; font-size: 15px; }
+label.head { color: #ac9259; font-weight: bold; }
+label.warn { color: #ef2929; }
+checkbutton label { font-size: 14px; }
+button.apply { background: #ac9259; background-image: none; }
+button.apply label { color: #201b14; font-weight: bold; }
+"""
+
+
+# ---------- themes and settings ----------
+
+def themes():
+    found = {}
+    for d in THEME_DIRS:
+        try:
+            names = sorted(os.listdir(d))
+        except OSError:
+            continue
+        for f in names:
+            if f.endswith(".css"):
+                found[f[:-4]] = os.path.join(d, f)
+    return found
+
+
+def read_theme(path):
+    colors = {}
+    try:
+        with open(path) as f:
+            for name, value in re.findall(r"@define-color\s+(\S+)\s+([^;]+);", f.read()):
+                colors[name] = value.strip()
+    except OSError:
+        pass
+    return colors
+
+
+def load_settings():
+    s = json.loads(json.dumps(DEFAULTS))
+    try:
+        with open(os.path.join(CONF, "settings.json")) as f:
+            s.update(json.load(f))
+    except (OSError, ValueError):
+        pass
+    return s
+
+
+def stock_modules():
+    """Module definitions from the stock config.jsonc, comments stripped."""
+    try:
+        with open(os.path.join(STOCK, "config.jsonc")) as f:
+            text = f.read()
+    except OSError:
+        return {}
+    text = re.sub(r"(?m)^\s*//.*$", "", text)
+    text = re.sub(r",(\s*[\]}])", r"\1", text)
+    try:
+        data = json.loads(text)
+    except ValueError:
+        return {}
+    if isinstance(data, list):
+        data = data[0] if data else {}
+    return {k: v for k, v in data.items() if isinstance(v, dict)}
+
+
+def size_of(name):
+    return next(s for s in SIZES if s[0] == name)
+
+
+def bar_width(modules, size):
+    scale = size_of(size)[2] / 14
+    return int(sum(w for m, _, _, w in MODULES if m in modules) * scale)
+
+
+# ---------- writing the bar config ----------
+
+def style_css(s):
+    font, pad, _ = size_of(s["size"])[2:]
+    radius = next(c[2] for c in CORNERS if c[0] == s["corners"])
+    out = ["/* written by rotate-bar-settings */"]
+    for key, _ in KEYS:
+        out.append(f"@define-color {key} {s['colors'][key]};")
+    out.append(f"""
+* {{
+    font-family: "Hack";
+    font-size: {font}px;
+    font-weight: Bold;
+}}
+* {{
+    color: @text;
+    background-color: @base;
+    padding: 0px {pad}px;
+    margin: 3px 1px;
+    border-radius: {radius}px;
+}}
+#bar {{ background: none; margin: 3px 4px; }}
+#bar.sel {{ background: none; }}
+#tags {{ padding: 0px {pad + 1}px; margin: 0px 2px; }}""")
+    for sel, bg, fg in PILLS:
+        if s["fill"] == "gradient":
+            back = f"linear-gradient(to top, mix(@{bg}, @ink, 0.15), mix(@{bg}, @fade, 0.30))"
+        else:
+            back = f"@{bg}"
+        out.append(f"{sel} {{ background: {back}; color: @{fg}; }}")
+    out.append("""
+menu { background-color: @menu; border-color: @text; border-radius: 10px; font-size: 14px; }
+menuitem { color: @text; }
+menuitem:hover { color: @ink; background-color: @accent2; }
+""")
+    return "\n".join(out)
+
+
+def config_json(s):
+    defs = stock_modules()
+    for name, (what, interval, fmt) in SENSORS.items():
+        defs[name] = {"exec": f"rotate-bar-sensor {what}", "interval": interval, "format": fmt}
+    height = size_of(s["size"])[4]
+    profiles = []
+    for key, _, outputs, _ in BARS:
+        bar = s[key]
+        if not bar["on"]:
+            continue
+        chosen = [m for m, _, _, _ in MODULES if m in bar["modules"]]
+        p = {
+            "output": outputs,
+            "layer": "top",
+            "height": height,
+            "buffer-scale": 1,
+            "modules-left": [m for m in chosen if next(x[2] for x in MODULES if x[0] == m)],
+            "modules-center": [],
+            "modules-right": [m for m in chosen if not next(x[2] for x in MODULES if x[0] == m)],
+        }
+        p.update(defs)
+        profiles.append(p)
+    return json.dumps(profiles, ensure_ascii=False, indent=2)
+
+
+def apply(s):
+    os.makedirs(CONF, exist_ok=True)
+    with open(os.path.join(CONF, "settings.json"), "w") as f:
+        json.dump(s, f, indent=2)
+    with open(os.path.join(CONF, "style.css"), "w") as f:
+        f.write(style_css(s))
+    with open(os.path.join(CONF, "config.jsonc"), "w") as f:
+        f.write(config_json(s))
+    if s["upper"]["on"] or s["lower"]["on"]:
+        subprocess.Popen(["rotate-bar"], start_new_session=True,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        subprocess.run(["pkill", "-x", "mangobar"])
+
+
+def revert():
+    """Drop what apply() wrote, so rotate-bar falls back to the stock config.
+    Saved themes in CONF/themes stay."""
+    for name in ("settings.json", "style.css", "config.jsonc"):
+        try:
+            os.remove(os.path.join(CONF, name))
+        except FileNotFoundError:
+            pass
+    subprocess.Popen(["rotate-bar"], start_new_session=True,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+# ---------- window ----------
+
+def hex_of(rgba):
+    return "#%02x%02x%02x" % (round(rgba.red * 255), round(rgba.green * 255),
+                              round(rgba.blue * 255))
+
+
+def heading(text):
+    label = Gtk.Label(label=text, xalign=0)
+    label.add_css_class("head")
+    return label
+
+
+def scrolled(child):
+    sw = Gtk.ScrolledWindow(vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
+    sw.set_child(child)
+    return sw
+
+
+def vbox(spacing=8):
+    return Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=spacing,
+                   margin_top=10, margin_bottom=10, margin_start=10, margin_end=10)
+
+
+class BarSettings(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Bar Settings")
+        self.set_default_size(600, 440)
+        self.filling = False
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        self.build()
+        self.present()
+
+    def build(self):
+        """(Re)load the settings and lay the window out for them."""
+        self.s = load_settings()
+        self.themes = themes()
+        if not self.s["colors"]:
+            self.s["colors"] = read_theme(self.themes.get(self.s["theme"], ""))
+        for key, _ in KEYS:
+            self.s["colors"].setdefault(key, "#808080")
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.set_child(outer)
+        book = Gtk.Notebook(vexpand=True)
+        book.append_page(self.colors_page(), Gtk.Label(label="Colors"))
+        book.append_page(self.shape_page(), Gtk.Label(label="Shape"))
+        book.append_page(self.bars_page(), Gtk.Label(label="Bars"))
+        outer.append(book)
+
+        foot = Gtk.Box(spacing=12, margin_top=6, margin_bottom=8, margin_start=10, margin_end=10)
+        self.status = Gtk.Label(xalign=0, hexpand=True)
+        back = Gtk.Button(label="Revert to default")
+        back.connect("clicked", self.on_revert)
+        go = Gtk.Button(label="Apply")
+        go.add_css_class("apply")
+        go.connect("clicked", self.on_apply)
+        foot.append(self.status)
+        foot.append(back)
+        foot.append(go)
+        outer.append(foot)
+
+    def colors_page(self):
+        box = vbox()
+        row = Gtk.Box(spacing=8)
+        row.append(Gtk.Label(label="Theme", xalign=0))
+        self.theme_names = sorted(self.themes)
+        self.theme_pick = Gtk.DropDown.new_from_strings(self.theme_names or ["(none)"])
+        if self.s["theme"] in self.theme_names:
+            self.theme_pick.set_selected(self.theme_names.index(self.s["theme"]))
+        self.theme_pick.connect("notify::selected", self.on_theme)
+        row.append(self.theme_pick)
+        box.append(row)
+
+        grid = Gtk.Grid(column_spacing=12, row_spacing=4)
+        self.color_buttons = {}
+        for i, (key, label) in enumerate(KEYS):
+            b = Gtk.ColorDialogButton.new(Gtk.ColorDialog(with_alpha=False))
+            b.connect("notify::rgba", self.on_color, key)
+            self.color_buttons[key] = b
+            grid.attach(Gtk.Label(label=label, xalign=0), 0, i, 1, 1)
+            grid.attach(b, 1, i, 1, 1)
+        self.show_colors()
+        box.append(grid)
+
+        save = Gtk.Box(spacing=8)
+        self.theme_name = Gtk.Entry(placeholder_text="new theme name", hexpand=True)
+        b = Gtk.Button(label="Save as theme")
+        b.connect("clicked", self.on_save_theme)
+        save.append(self.theme_name)
+        save.append(b)
+        box.append(save)
+        return scrolled(box)
+
+    def show_colors(self):
+        self.filling = True
+        for key, b in self.color_buttons.items():
+            rgba = Gdk.RGBA()
+            if rgba.parse(self.s["colors"][key]):
+                b.set_rgba(rgba)
+        self.filling = False
+
+    def on_theme(self, dd, _pspec):
+        if not self.theme_names:
+            return
+        name = self.theme_names[dd.get_selected()]
+        self.s["theme"] = name
+        self.s["colors"].update(read_theme(self.themes[name]))
+        self.show_colors()
+
+    def on_color(self, button, _pspec, key):
+        if not self.filling:
+            self.s["colors"][key] = hex_of(button.get_rgba())
+
+    def on_save_theme(self, _button):
+        name = re.sub(r"[^A-Za-z0-9_-]", "", self.theme_name.get_text().strip())
+        if not name:
+            self.say("Give the theme a name (letters, digits, - and _)", warn=True)
+            return
+        d = THEME_DIRS[1]
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, name + ".css"), "w") as f:
+            f.write(f"/* mangobar color theme: {name} (saved by rotate-bar-settings) */\n")
+            for key, _ in KEYS:
+                f.write(f"@define-color {key} {self.s['colors'][key]};\n")
+        self.themes = themes()
+        self.theme_names = sorted(self.themes)
+        self.s["theme"] = name
+        self.theme_pick.set_model(Gtk.StringList.new(self.theme_names))
+        self.theme_pick.set_selected(self.theme_names.index(name))
+        self.say(f"Saved theme {name}")
+
+    def shape_page(self):
+        box = vbox(12)
+        for title, key, options in (("Corners", "corners", CORNERS), ("Fill", "fill", FILLS),
+                                    ("Size", "size", SIZES)):
+            row = Gtk.Box(spacing=8)
+            row.append(Gtk.Label(label=title, xalign=0, width_chars=10))
+            ids = [o[0] for o in options]
+            dd = Gtk.DropDown.new_from_strings([o[1] for o in options])
+            dd.set_selected(ids.index(self.s[key]) if self.s[key] in ids else 0)
+            dd.connect("notify::selected", self.on_choice, key, ids)
+            row.append(dd)
+            box.append(row)
+        return scrolled(box)
+
+    def on_choice(self, dd, _pspec, key, ids):
+        self.s[key] = ids[dd.get_selected()]
+        self.update_widths()
+
+    def bars_page(self):
+        box = vbox(6)
+        self.width_labels = {}
+        for key, title, _, _ in BARS:
+            head = Gtk.Box(spacing=8)
+            head.append(heading(title))
+            sw = Gtk.Switch(active=self.s[key]["on"], halign=Gtk.Align.END, hexpand=True)
+            sw.connect("notify::active", self.on_bar, key)
+            head.append(sw)
+            box.append(head)
+
+            grid = Gtk.Grid(column_spacing=12, row_spacing=2)
+            for i, (mod, label, _, _) in enumerate(MODULES):
+                cb = Gtk.CheckButton(label=label, active=mod in self.s[key]["modules"])
+                cb.connect("toggled", self.on_module, key, mod)
+                grid.attach(cb, i % 3, i // 3, 1, 1)
+            box.append(grid)
+            self.width_labels[key] = Gtk.Label(xalign=0)
+            box.append(self.width_labels[key])
+        self.update_widths()
+        return scrolled(box)
+
+    def on_bar(self, sw, _pspec, key):
+        self.s[key]["on"] = sw.get_active()
+
+    def on_module(self, cb, key, mod):
+        mods = self.s[key]["modules"]
+        if cb.get_active() and mod not in mods:
+            mods.append(mod)
+        elif not cb.get_active() and mod in mods:
+            mods.remove(mod)
+        self.update_widths()
+
+    def update_widths(self):
+        limit = {key: width for key, _, _, width in BARS}
+        for key, label in getattr(self, "width_labels", {}).items():
+            w = bar_width(self.s[key]["modules"], self.s["size"])
+            if not limit[key]:  # screen of unknown width
+                label.set_text(f"about {w} px")
+                label.remove_css_class("warn")
+                continue
+            label.set_text(f"about {w} of {limit[key]} px")
+            if w > limit[key]:
+                label.add_css_class("warn")
+                label.set_text(label.get_text() + " - will not fit")
+            else:
+                label.remove_css_class("warn")
+
+    def on_revert(self, _button):
+        ask = Gtk.AlertDialog(message="Revert the bar to the default?",
+                              detail="Colors, shape and bar contents go back to the stock "
+                                     "mangobar config. Saved themes are kept.",
+                              buttons=["Cancel", "Revert"], cancel_button=0, default_button=0)
+        ask.choose(self, None, self.on_revert_answer)
+
+    def on_revert_answer(self, ask, result):
+        try:
+            if ask.choose_finish(result) != 1:
+                return
+        except Exception:
+            return
+        revert()
+        self.build()
+        self.say("Reverted to default")
+
+    def on_apply(self, _button):
+        apply(self.s)
+        self.say("Applied")
+
+    def say(self, text, warn=False):
+        self.status.set_text(text)
+        if warn:
+            self.status.add_css_class("warn")
+        else:
+            self.status.remove_css_class("warn")
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:
+        win.present()
+        return
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):
+        provider.load_from_string(APP_CSS)
+    else:
+        provider.load_from_data(APP_CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    BarSettings(app)
+
+
+app = Gtk.Application(application_id="org.armbian.RotateBarSettings")
+app.connect("activate", on_activate)
+app.run(None)
