@@ -12,11 +12,10 @@ from gi.repository import Gdk, Gtk
 
 WVKBD = ('pkill -x wvkbd-mobintl || wvkbd-mobintl -L 240 -H 240 --fn "Sans 14" '
          '--landscape-layers full,special')
-ROFI = "rofi -config ~/.config/mango/rofi/config.rasi -show drun"
 
 # (button, what it does, command run on tap or None)
 ROWS = [
-    ("START", "App menu (tap)", ["sh", "-c", ROFI]),
+    ("START", "App menu (tap)", ["rgds-rofi"]),
     ("L1", "On-screen keyboard", ["sh", "-c", WVKBD]),
     ("R1", "Terminal", ["foot"]),
     ("L2", "Files", ["thunar"]),
