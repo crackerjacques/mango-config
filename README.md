@@ -48,9 +48,9 @@ mmsg dispatch reload_config
 | START (hold) + d-pad ←/→ | Previous / next desktop |
 | L1 | On-screen keyboard |
 | R1 | Terminal |
-| L2 | Previous desktop |
+| L2 (hold) + d-pad | Swap the window with the one on that side |
 | R2 | Controls cheat sheet (tap a row to run it) |
-| SELECT | Switch window |
+| SELECT (hold) + d-pad | Focus the window on that side |
 | START (hold) + SELECT | Screen off - any button or touch wakes it |
 | HOME (one of the two) | Switch window |
 | HOME (the other) | Input method (fcitx5) on / off |

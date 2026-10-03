@@ -3,10 +3,11 @@
 # variant of the bsp's /usr/bin/vita-pad2key. install.sh puts it over that file
 # and the existing vita-pad2key.service runs it unchanged.
 #  - L1/R1: Super+PageUp / Super+PageDown (wvkbd / foot in bind.conf)
-#  - L2/R2: Super+Left / Super+F1 (previous desktop / vita-cheatsheet)
+#  - L2: held Super+Shift, so L2 + d-pad swaps the window with its neighbour
+#    (exchange_client); R2: Super+F1 (vita-cheatsheet)
 #  - R3/L3: Tab / Shift+Tab
-#  - SELECT: Alt+Tab (switch window); START + SELECT is then Super+Alt+Tab,
-#    screen off in bind.conf
+#  - SELECT: held Alt, so SELECT + d-pad moves focus to the next window
+#    (Alt+arrows, focusdir); START + SELECT is screen off in bind.conf
 #  - Y: Backspace
 #  - the gpio HOME key (BTN_MODE): F13, input method on/off (bind.conf);
 #    the adc one (BTN_Z) switches windows
@@ -22,6 +23,7 @@ MAP = {
     e.BTN_EAST:   e.KEY_ESC,
     e.BTN_WEST:   e.KEY_BACKSPACE,
     e.BTN_START:  e.KEY_LEFTMETA,
+    e.BTN_SELECT: e.KEY_LEFTALT,
     e.BTN_THUMBR: e.KEY_TAB,
     e.BTN_MODE:   e.KEY_F13,
 }
@@ -30,13 +32,17 @@ COMBO = {
     e.BTN_Z:      (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
     e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
-    e.BTN_SELECT: (e.KEY_LEFTALT,   e.KEY_TAB),
-    e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFT),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
     e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
 }
-ALL = set(MAP) | set(COMBO)
+# Held for as long as the button is: modifiers pressed in this order and
+# released in reverse, so Super is never the last key down and letting go of
+# the button is not taken for a bare Super tap (rofi).
+HOLD = {
+    e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFTSHIFT),
+}
+ALL = set(MAP) | set(COMBO) | set(HOLD)
 
 # The buttons are split over two devices (gpio-keys pad, adc-keys HOME), so any
 # device carrying a mapped code is taken. Anything with axes is skipped: that
@@ -66,7 +72,7 @@ while not devs:
         time.sleep(2)
 
 _keys = set(MAP.values())
-for _seq in COMBO.values():
+for _seq in list(COMBO.values()) + list(HOLD.values()):
     _keys.update(_seq)
 
 ui = UInput({e.EV_KEY: sorted(_keys)}, name="vita-pad2key")
@@ -105,6 +111,15 @@ while True:
                     for k in seq: ui.write(e.EV_KEY, k, 1)
                     for k in reversed(seq): ui.write(e.EV_KEY, k, 0)
                     ui.syn()
+            elif ev.code in HOLD:
+                seq = HOLD[ev.code]
+                if ev.value == 1:
+                    held.setdefault(fd, set()).update(seq)
+                    for k in seq: ui.write(e.EV_KEY, k, 1)
+                elif ev.value == 0:
+                    held.get(fd, set()).difference_update(seq)
+                    for k in reversed(seq): ui.write(e.EV_KEY, k, 0)
+                ui.syn()
             elif ev.code in MAP:
                 k = MAP[ev.code]
                 if ev.value == 1:
