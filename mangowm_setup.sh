@@ -6,6 +6,7 @@ set -eu
 SRC=$HOME/src/mango-build
 CONFIG_REPO=https://github.com/crackerjacques/mango-config.git
 CONFIG_BRANCH=anbernic-rg-ds
+RAW=https://raw.githubusercontent.com/crackerjacques/mango-config/$CONFIG_BRANCH
 JOBS=$(nproc)
 
 say() { printf '\n\033[1;33m==> %s\033[0m\n' "$*"; }
@@ -68,7 +69,14 @@ step_scenefx() {
 
 step_mango() {
 	say "mango"
+	# drop the patch applied by an earlier run so the pull can fast-forward
+	[ -d "$SRC/mango/.git" ] && git -C "$SRC/mango" reset -q --hard
 	fetch https://github.com/mangowm/mango.git mango
+	# keys fcitx5 hands back from its keyboard grab must not hit the
+	# keybindings a second time (opened rofi on every START chord)
+	curl -fsSL -o "$SRC/mango-im-replay-no-rebind.patch" \
+		"$RAW/patches/mango-im-replay-no-rebind.patch"
+	git -C "$SRC/mango" apply "$SRC/mango-im-replay-no-rebind.patch"
 	build mango
 	# the session file lands in /usr/local/share; make sure login screens that
 	# only look in /usr/share see it too
