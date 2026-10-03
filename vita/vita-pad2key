@@ -5,7 +5,8 @@
 #  - L1/R1: Super+PageUp / Super+PageDown (wvkbd / foot in bind.conf)
 #  - L2/R2: Super+Left / Super+F1 (previous desktop / vita-cheatsheet)
 #  - R3/L3: Tab / Shift+Tab
-#  - SELECT: Super+Space (screen off in bind.conf)
+#  - SELECT: Alt+Tab (switch window); START + SELECT is then Super+Alt+Tab,
+#    screen off in bind.conf
 #  - Y: Backspace
 #  - the gpio HOME key (BTN_MODE): F13, input method on/off (bind.conf);
 #    the adc one (BTN_Z) switches windows
@@ -29,7 +30,7 @@ COMBO = {
     e.BTN_Z:      (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
     e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
-    e.BTN_SELECT: (e.KEY_LEFTMETA,  e.KEY_SPACE),
+    e.BTN_SELECT: (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFT),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),

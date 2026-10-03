@@ -50,7 +50,8 @@ mmsg dispatch reload_config
 | R1 | Terminal |
 | L2 | Previous desktop |
 | R2 | Controls cheat sheet (tap a row to run it) |
-| SELECT | Screen off - any button or touch wakes it |
+| SELECT | Switch window |
+| START (hold) + SELECT | Screen off - any button or touch wakes it |
 | HOME (one of the two) | Switch window |
 | HOME (the other) | Input method (fcitx5) on / off |
 | X | Close window |
