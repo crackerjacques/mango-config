@@ -48,11 +48,11 @@ step_deps() {
 		libxcb-errors-dev libxcb-randr0-dev \
 		libfcft-dev libtllist-dev libutf8proc-dev libfontconfig-dev ncurses-bin \
 		libcairo2-dev libpulse-dev libsystemd-dev libgdk-pixbuf-2.0-dev systemd-dev \
-		libasound2-dev libpam0g-dev \
+		libasound2-dev libpam0g-dev pavucontrol pulseaudio-utils\
 		rofi xdg-desktop-portal-wlr swaybg cliphist wl-clipboard wlsunset \
-		xfce-polkit sway-notification-center pamixer swayidle brightnessctl swayosd \
+		xfce-polkit sway-notification-center pipewire-audio pamixer swayidle brightnessctl swayosd \
 		wlr-randr grim slurp sox wvkbd fonts-font-awesome fonts-hack \
-		python3-gi gir1.2-gtk-4.0 python3-evdev thunar
+		python3-gi gir1.2-gtk-4.0 python3-evdev thunar breeze-icon-theme
 }
 
 step_wlroots() {
