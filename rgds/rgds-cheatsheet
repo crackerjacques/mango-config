@@ -33,6 +33,7 @@ ROWS = [
     ("HOME/Return", "Shift+Tab / Tab", None),
     ("POWER", "Power menu", ["rgds-logout"]),
     ("", "Brightness", ["rgds-brightness"]),
+    ("", "Bar settings", ["rgds-bar-settings"]),
     ("", "Screen off (any button wakes)", ["rgds-screenoff"]),
 ]
 

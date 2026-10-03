@@ -1,0 +1,16 @@
+#!/bin/sh
+# RG DS: (re)start mangobar. Uses what rgds-bar-settings wrote to
+# ~/.config/rgds-bar, or the stock config in the mango config until then.
+#   rgds-bar           restart it
+#   rgds-bar --toggle  stop it if it runs, start it if not (Super+h)
+u=${XDG_CONFIG_HOME:-$HOME/.config}/rgds-bar
+m=$HOME/.config/mango/mangobar
+cfg=$m/config.jsonc
+css=$m/style.css
+[ -f "$u/config.jsonc" ] && cfg=$u/config.jsonc
+[ -f "$u/style.css" ] && css=$u/style.css
+
+if pkill -x mangobar && [ "$1" = --toggle ]; then
+	exit 0
+fi
+exec mangobar -c "$cfg" -s "$css"

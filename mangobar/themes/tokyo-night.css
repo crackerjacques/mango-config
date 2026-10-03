@@ -1,0 +1,15 @@
+/* mangobar color theme: tokyo-night. Read by rgds-bar-settings; copy this
+   file to ~/.config/rgds-bar/themes/<name>.css to make your own. */
+@define-color base     #292e42;  /* plain module background */
+@define-color text     #c0caf5;  /* text on base */
+@define-color ink      #1a1b26;  /* text on colored pills */
+@define-color tag      #3b4261;  /* tag buttons */
+@define-color active   #7aa2f7;  /* focused tag, power */
+@define-color urgent   #f7768e;  /* urgent tag */
+@define-color accent1  #e0af68;  /* volume, temperature */
+@define-color accent2  #9ece6a;  /* battery, date, network, power draw */
+@define-color accent3  #a9b1d6;  /* clock, cpu, disk, uptime */
+@define-color accent4  #bb9af7;  /* window title, layout, brightness */
+@define-color accent5  #7dcfff;  /* memory, wifi */
+@define-color fade     #c0caf5;  /* gradient highlight */
+@define-color menu     #1a1b26;  /* tray menu background */

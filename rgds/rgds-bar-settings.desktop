@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Bar Settings
+Comment=mangobar colors, shape and what the upper and lower bars show
+Exec=rgds-bar-settings
+Icon=rgds-bar-settings
+Categories=Settings;
