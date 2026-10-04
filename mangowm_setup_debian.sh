@@ -71,6 +71,7 @@ step_deps() {
 		rofi xdg-desktop-portal-wlr swaybg cliphist wl-clipboard wlsunset \
 		xfce-polkit polkitd sway-notification-center pipewire-audio pamixer swayidle brightnessctl swayosd rfkill libnotify-bin \
 		wlr-randr grim slurp sox wvkbd fonts-font-awesome fonts-hack \
+		blueman network-manager-applet x11-xserver-utils gtk-update-icon-cache \
 		python3-gi gir1.2-gtk-4.0 python3-evdev thunar breeze-icon-theme
 }
 
