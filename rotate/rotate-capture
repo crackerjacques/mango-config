@@ -1,0 +1,53 @@
+#!/bin/sh
+# RG Rotate: screenshot and screen recording of the whole screen.
+
+conf=${XDG_CONFIG_HOME:-$HOME/.config}/rotate-capture
+last=${XDG_RUNTIME_DIR:-/tmp}/rotate-capture
+stamp=$(date +%Y%m%d-%H%M%S)
+
+say() {
+	notify-send -a Capture -t 3000 "$1" 2>/dev/null || echo "$1"
+}
+
+sound=$(cat "$conf" 2>/dev/null)
+sound=${sound:-system}
+
+case "$1" in
+shot)
+	dir=$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Screenshots
+	mkdir -p "$dir"
+	grim "$dir/screenshot-$stamp.png" && say "Screenshot: $dir/screenshot-$stamp.png"
+	;;
+record)
+	if pkill -INT -x wf-recorder; then
+		say "Recording saved: $(cat "$last" 2>/dev/null)"
+		exit 0
+	fi
+	dir=$(xdg-user-dir VIDEOS 2>/dev/null || echo "$HOME/Videos")
+	mkdir -p "$dir"
+	file=$dir/recording-$stamp.mp4
+	case "$sound" in
+		system) set -- "--audio=$(pactl get-default-sink).monitor" ;;
+		mic) set -- --audio ;;
+		*) set -- ;;
+	esac
+	echo "$file" >"$last"
+	wf-recorder "$@" -c libx264 -p preset=ultrafast -p crf=28 -x yuv420p -r 30 \
+		-f "$file" >/dev/null 2>&1 &
+	say "Recording, sound: $sound. L1 + Vol- again to stop."
+	;;
+sound)
+	case "$sound" in
+		system) sound=mic ;;
+		mic) sound=off ;;
+		*) sound=system ;;
+	esac
+	mkdir -p "${conf%/*}"
+	echo "$sound" >"$conf"
+	say "Recording sound: $sound"
+	;;
+*)
+	echo "usage: rotate-capture shot | record | sound" >&2
+	exit 1
+	;;
+esac

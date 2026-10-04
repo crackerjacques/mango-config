@@ -4,7 +4,7 @@
 set -e
 cd "$(dirname "$0")"
 
-install -m 755 rotate-pad2key rotate-lid rotate-lid-settings rotate-logout rotate-wallpaper rotate-cheatsheet rotate-brightness rotate-bar rotate-bar-sensor rotate-bar-settings rotate-scale rotate-rofi rotate-wireless rotate-rumble /usr/bin/
+install -m 755 rotate-pad2key rotate-lid rotate-lid-settings rotate-logout rotate-wallpaper rotate-cheatsheet rotate-brightness rotate-bar rotate-bar-sensor rotate-bar-settings rotate-scale rotate-rofi rotate-wireless rotate-rumble rotate-capture /usr/bin/
 install -m 644 rotate-lid-settings.desktop rotate-wallpaper.desktop \
 	rotate-cheatsheet.desktop rotate-brightness.desktop \
 	rotate-bar-settings.desktop rotate-scale.desktop rotate-wireless.desktop /usr/share/applications/

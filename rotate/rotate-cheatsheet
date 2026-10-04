@@ -12,7 +12,9 @@ WVKBD = 'pkill -RTMIN -x wvkbd-mobintl || wvkbd-mobintl -L 275 -H 275 --fn "Sans
 # (button, what it does, command run on tap or None)
 ROWS = [
     ("START", "App menu (tap)", ["rotate-rofi"]),
-    ("L1", "On-screen keyboard", ["sh", "-c", WVKBD]),
+    ("L1 (tap)", "On-screen keyboard", ["sh", "-c", WVKBD]),
+    ("L1 + Vol+", "Screenshot", ["rotate-capture", "shot"]),
+    ("L1 + Vol-", "Screen recording start / stop", ["rotate-capture", "record"]),
     ("R1", "Terminal", ["foot"]),
     ("START + R1", "Files", ["thunar"]),
     ("L2 + D-pad", "Swap the window with the one that way", None),
@@ -30,6 +32,7 @@ ROWS = [
     ("POWER", "Power menu", ["rotate-logout"]),
     ("", "Brightness", ["rotate-brightness"]),
     ("", "Wireless on/off (Airplane mode)", ["rotate-wireless"]),
+    ("", "Recording sound: system / mic / off", ["rotate-capture", "sound"]),
     ("", "Bar settings", ["rotate-bar-settings"]),
     ("", "Desktop scale", ["rotate-scale"]),
     ("", "Wallpaper", ["rotate-wallpaper"]),
