@@ -1,5 +1,6 @@
 #!/bin/bash
-# RG Vita Pro: build and set up mango on Ubuntu 26.04 from scratch.
+# RG Vita Pro: build and set up mango on Debian forky (testing) or sid
+# from scratch. For Ubuntu 26.04 use mangowm_setup.sh.
 
 set -eu
 
@@ -11,6 +12,20 @@ JOBS=$(nproc)
 
 say() { printf '\n\033[1;33m==> %s\033[0m\n' "$*"; }
 
+check_os() {
+	. /etc/os-release
+	if [ "${ID:-}" != debian ]; then
+		echo "This script is for Debian. On Ubuntu use mangowm_setup.sh." >&2
+		exit 1
+	fi
+	if [ -n "${VERSION_ID:-}" ]; then
+		echo "Debian $VERSION_ID ($VERSION_CODENAME) is not supported." >&2
+		echo "Trixie and older lack the wayland, libdrm and xkbcommon that" >&2
+		echo "wlroots 0.20 needs. Use Debian forky (testing) or sid." >&2
+		exit 1
+	fi
+}
+
 fetch() {
 	if [ -d "$SRC/$2/.git" ]; then
 		git -C "$SRC/$2" fetch --tags -q
@@ -18,7 +33,6 @@ fetch() {
 		git clone -q "$1" "$SRC/$2"
 	fi
 	[ -n "${3:-}" ] && git -C "$SRC/$2" checkout -q "$3"
-	# a tag leaves HEAD detached and needs no pull; a branch does
 	if git -C "$SRC/$2" symbolic-ref -q HEAD >/dev/null; then
 		git -C "$SRC/$2" pull -q --ff-only
 	fi
@@ -69,7 +83,6 @@ step_scenefx() {
 
 step_mango() {
 	say "mango"
-	# drop the patch applied by an earlier run so the pull can fast-forward
 	[ -d "$SRC/mango/.git" ] && git -C "$SRC/mango" reset -q --hard
 	fetch https://github.com/mangowm/mango.git mango
 	curl -fsSL -o "$SRC/mango-im-replay-no-rebind.patch" \
@@ -159,6 +172,11 @@ step_ime() {
 		return 0
 	fi
 	say "input method: fcitx5 + $IME"
+	if ! apt-cache show "$IME_PKG" >/dev/null 2>&1; then
+		echo "$IME_PKG is not in this Debian release right now; skipping the input method."
+		echo "Once it is back, run: bash mangowm_setup_debian.sh ime"
+		return 0
+	fi
 	sudo apt-get install -y fcitx5 fcitx5-config-qt fonts-noto-cjk "$IME_PKG"
 
 	fcitx5-remote -e 2>/dev/null || true
@@ -216,24 +234,15 @@ CONF
 ALL="deps wlroots scenefx mango foot extras rust config ime board autologin"
 
 [ "$(id -u)" -ne 0 ] || { echo "run as the desktop user, not root" >&2; exit 1; }
+check_os
 
 cat <<EOF
 
-  Anbernic RG Vita Pro AutoSetup
-  ==============================
+  Anbernic RG Vita Pro AutoSetup (Debian)
+  =======================================
 
-  **NOTE**
-
-  Before running this script,
-  please add “deb-src” to "Types" Line.
-  /etc/apt/sources.list.d/ubuntu.sources
-  
-  Like:
-  ========
-  Types: deb deb-src <---------THIS LINE
-  URIs: http://ports.ubuntu.com/
-  ....
-  ========
+  For Debian forky (testing) and sid only.
+  Debian 13 (trixie) is NOT supported.
 
   Builds the mango Wayland compositor and its desktop pieces from source
   (wlroots, scenefx, mango, foot, mangobar, ...) into /usr/local, puts the

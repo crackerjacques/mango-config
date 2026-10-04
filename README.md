@@ -16,6 +16,10 @@ curl -LO https://raw.githubusercontent.com/crackerjacques/mango-config/anbernic-
 bash mangowm_setup.sh
 ```
 
+On Debian forky (testing) or sid, use `mangowm_setup_debian.sh` the same way.
+Debian 13 (trixie) is not supported: wlroots 0.20 needs newer wayland, libdrm
+and xkbcommon than it has.
+
 It asks which input method to set up (none, Japanese, Chinese, Korean,
 Vietnamese) and to confirm, then:
 
