@@ -1,16 +1,5 @@
 #!/usr/bin/env python3
-# RG DS: gamepad/HOME buttons -> keyboard keys (evdev/uinput), mango variant of
-# the bsp's /usr/bin/rgds-pad2key. install.sh puts it over that file and the
-# existing rgds-pad2key.service runs it unchanged.
-#  - L1/R1: Super+PageUp / Super+PageDown (wvkbd / foot in bind.conf)
-#  - L2: held Super+Shift, so L2 + d-pad swaps the window with its neighbour
-#    (exchange_client); R2: Super+F1 (rgds-cheatsheet in bind.conf)
-#  - R3/L3: Tab / Shift+Tab
-#  - SELECT: held Alt, so SELECT + d-pad moves focus to the next window, or
-#    to the other screen when there is none that way (focusdir with
-#    focus_cross_monitor); START + SELECT is screen off in bind.conf
-#  - Y: Backspace
-#  - the gpio HOME key (KEY_HOME): F13, input method on/off (bind.conf)
+# RG DS: gamepad/HOME buttons -> keyboard keys (evdev/uinput).
 
 import time, select, evdev
 from evdev import ecodes as e, UInput
@@ -34,22 +23,15 @@ COMBO = {
     e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
-    e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
+    e.BTN_TR:     (e.KEY_F14,),
 }
-# Held for as long as the button is: modifiers pressed in this order and
-# released in reverse, so Super is never the last key down and letting go of
-# the button is not taken for a bare Super tap (rofi).
+
 HOLD = {
     e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFTSHIFT),
 }
 ALL = set(MAP) | set(COMBO) | set(HOLD)
-# Devices are picked by the gamepad buttons only: KEY_HOME is on the pad here,
-# but also on every keyboard, whose Home key must stay a Home key.
 PAD = {c for c in ALL if c != e.KEY_HOME}
 
-# The buttons are split over two devices (gpio-keys pad, adc-keys HOME), so any
-# device carrying a mapped code is taken. Anything with axes is skipped: that
-# is a USB controller, whose buttons must not turn into desktop keys.
 def sources():
     out = {}
     for p in evdev.list_devices():
@@ -79,8 +61,6 @@ for _seq in list(COMBO.values()) + list(HOLD.values()):
 
 ui = UInput({e.EV_KEY: sorted(_keys)}, name="rgds-pad2key")
 
-# Keys this process is currently holding down, per source. A device can vanish
-# mid-press, and without this the virtual keyboard keeps the key down for good.
 held = {}
 
 def tap(seq):

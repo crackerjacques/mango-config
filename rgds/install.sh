@@ -10,7 +10,6 @@ install -m 644 rgds-lid-settings.desktop rgds-cheatsheet.desktop \
 	rgds-wallpaper.desktop rgds-brightness.desktop \
 	rgds-bar-settings.desktop rgds-scale.desktop rgds-wireless.desktop /usr/share/applications/
 install -m 644 49-rgds-touch.rules /etc/polkit-1/rules.d/
-# own icons in hicolor, which every icon theme falls back to
 install -m 644 icons/*.svg /usr/share/icons/hicolor/scalable/apps/
 gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true
 
@@ -22,8 +21,6 @@ HandlePowerKeyLongPress=poweroff
 CONF
 systemctl reload systemd-logind
 
-# rgds-touch grabs the real panels, so it must not run under X11: the mango
-# session starts and stops it (autostart.sh / logout) instead of boot.
 systemctl daemon-reload
 systemctl disable --now rgds-touch
 systemctl restart rgds-pad2key

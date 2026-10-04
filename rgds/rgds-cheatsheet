@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-# RG DS: what every button does under mango. Rows with an action run it when
-# tapped (or picked with the d-pad and A) and close the sheet; the rest are
-# for reading. Opened by R2 or from the app menu; R2 again or B closes it.
-#
-# Keep this in step with rgds-pad2key and bind.conf.
+# RG DS: what every button does under mango.
 import subprocess
 
 import gi
@@ -18,6 +14,7 @@ ROWS = [
     ("START", "App menu (tap)", ["rgds-rofi"]),
     ("L1", "On-screen keyboard", ["sh", "-c", WVKBD]),
     ("R1", "Terminal", ["foot"]),
+    ("START + R1", "Files", ["thunar"]),
     ("L2 + D-pad", "Swap the window with the one that way", None),
     ("R2", "This cheat sheet", None),
     ("SELECT + D-pad", "Focus the next window that way, or the other screen", None),
@@ -32,7 +29,6 @@ ROWS = [
     ("D-pad", "Arrow keys", None),
     ("HOME/Return", "Shift+Tab / Tab", None),
     ("POWER", "Power menu", ["rgds-logout"]),
-    ("", "Files", ["thunar"]),
     ("", "Brightness", ["rgds-brightness"]),
     ("", "Wireless on/off (Airplane mode)", ["rgds-wireless"]),
     ("", "Bar settings", ["rgds-bar-settings"]),
@@ -56,7 +52,7 @@ button:hover, button:active { background: #3a3125; }
 
 def load_css():
     provider = Gtk.CssProvider()
-    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+    if hasattr(provider, "load_from_string"):
         provider.load_from_string(CSS)
     else:
         provider.load_from_data(CSS, -1)

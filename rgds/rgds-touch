@@ -1,15 +1,6 @@
 #!/usr/bin/env python3
 # RG DS: republish the two Goodix touchscreens under distinct names.
-#
-# Both panels report the same name and IDs, and mango's devicerule can only
-# match on those, so it cannot pin each one to its own screen. This grabs each
-# panel - picked by i2c controller, as rgds-screen does on X11 - and replays
-# it through a uinput device with its own name; config.conf then pins
-# rgds-touch-top to DSI-2 and rgds-touch-bottom to DSI-1.
-#
-# The grab hides the real panels from everything else, so this is for the
-# mango session only: autostart.sh starts it and logout stops it, and under
-# X11 rgds-screen maps the real devices instead.
+
 import glob, os, select, time, evdev
 from evdev import UInput
 

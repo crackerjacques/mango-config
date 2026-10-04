@@ -1,10 +1,5 @@
 #!/bin/bash
 # RG DS: lid switch handler, run by the switchbind lines in bind.conf.
-#
-# What closing the lid does is picked with rgds-lid-settings and kept in
-# ~/.config/rgds-lid: none, off (panel power only) or sleep. logind must
-# be told to ignore the lid (rgds-lid-settings sets that up), otherwise it
-# suspends on its own before this ever runs.
 
 OUTPUTS="DSI-1 DSI-2"
 

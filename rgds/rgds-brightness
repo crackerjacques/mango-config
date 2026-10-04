@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-# RG DS: brightness sliders, one per screen - each panel has its own
-# backlight (backlight1 = top/DSI-2, backlight0 = bottom/DSI-1 in the DTS).
-# Drag a slider, or d-pad up/down to pick one and left/right to move it;
-# B (Esc) closes.
-#
-# Goes through brightnessctl, which asks logind when the backlight is not
-# writable by the user. Kept above 5% so the panel can never be turned black.
+# RG DS: brightness sliders.
+
 import subprocess
 
 import gi
@@ -29,7 +24,7 @@ scale:focus slider { outline: 3px solid #d1b88e; outline-offset: 2px; }
 
 def load_css():
     provider = Gtk.CssProvider()
-    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+    if hasattr(provider, "load_from_string"):
         provider.load_from_string(CSS)
     else:
         provider.load_from_data(CSS, -1)

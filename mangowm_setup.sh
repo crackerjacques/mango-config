@@ -3,7 +3,12 @@
 
 set -eu
 
-SRC=$HOME/src/mango-build
+HERE=$(cd "$(dirname "$0")" && pwd)
+if [ -e "$HERE/.git" ] && [ -f "$HERE/bind.conf" ] && [ "$HERE" != "$HOME/.config/mango" ]; then
+	SRC=$HERE/src
+else
+	SRC=${XDG_CACHE_HOME:-$HOME/.cache}/mango-build
+fi
 CONFIG_REPO=https://github.com/crackerjacques/mango-config.git
 CONFIG_BRANCH=anbernic-rg-ds
 RAW=https://raw.githubusercontent.com/crackerjacques/mango-config/$CONFIG_BRANCH
@@ -211,6 +216,20 @@ CONF
 	echo "/etc/sddm.conf.d/autologin.conf (delete it to get the login screen back)."
 }
 
+cleanup() {
+	[ -d "$SRC" ] || return 0
+	echo
+	echo "Build sources in $SRC take $(du -sh "$SRC" | cut -f1)."
+	echo "Keeping them makes re-running a step faster and lets you uninstall."
+	read -r -p "Delete them? (N/y) " answer </dev/tty
+	case "$answer" in
+		[yY]*)
+			rm -rf "$SRC" 2>/dev/null || sudo rm -rf "$SRC"
+			echo "deleted" ;;
+		*) echo "kept" ;;
+	esac
+}
+
 ALL="deps wlroots scenefx mango foot extras rust config ime board autologin"
 
 [ "$(id -u)" -ne 0 ] || { echo "run as the desktop user, not root" >&2; exit 1; }
@@ -250,6 +269,12 @@ case "$answer" in
 	*) echo "aborted"; exit 0 ;;
 esac
 
+# older versions built in ~/src/mango-build
+if [ -d "$HOME/src/mango-build" ] && [ ! -e "$SRC" ]; then
+	mkdir -p "${SRC%/*}"
+	mv "$HOME/src/mango-build" "$SRC"
+	rmdir "$HOME/src" 2>/dev/null || true
+fi
 mkdir -p "$SRC"
 for s in ${*:-$ALL}; do
 	case " $ALL " in
@@ -257,4 +282,5 @@ for s in ${*:-$ALL}; do
 		*) echo "unknown step: $s (steps: $ALL)" >&2; exit 1 ;;
 	esac
 done
+cleanup
 say "done - log out and pick mango in the login screen"
