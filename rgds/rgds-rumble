@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+# RG DS: a short buzz of the built-in vibrator.
+
+import fcntl
+import glob
+import sys
+import time
+
+import evdev
+from evdev import ecodes as e, ff
+
+STATE = "/run/rgds-rumble.charger"
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def vibrator():
+    for path in evdev.list_devices():
+        try:
+            dev = evdev.InputDevice(path)
+        except OSError:
+            continue
+        if "vibra" in dev.name.lower() and e.EV_FF in dev.capabilities():
+            return dev
+        dev.close()
+    return None
+
+
+def buzz(ms):
+    dev = vibrator()
+    if not dev:
+        return
+    effect = ff.Effect(e.FF_RUMBLE, -1, 0, ff.Trigger(0, 0), ff.Replay(ms, 0),
+                       ff.EffectType(ff_rumble_effect=ff.Rumble(0xffff, 0xffff)))
+    eid = dev.upload_effect(effect)
+    dev.write(e.EV_FF, eid, 1)
+    time.sleep(ms / 1000)
+    dev.erase_effect(eid)
+    dev.close()
+
+
+def charger_online():
+    for p in glob.glob("/sys/class/power_supply/*"):
+        if read(f"{p}/type") != "Battery" and read(f"{p}/online") == "1":
+            return True
+    return False
+
+
+def plugged():
+    """Buzz on the change from no charger to charger. The first call after
+    boot only notes the state, so booting on the charger stays quiet."""
+    now = "1" if charger_online() else "0"
+    with open(STATE, "a+") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        f.seek(0)
+        before = f.read().strip()
+        f.seek(0)
+        f.truncate()
+        f.write(now)
+    if before == "0" and now == "1":
+        buzz(120)
+
+
+if len(sys.argv) > 1 and sys.argv[1] == "--plugged":
+    plugged()
+else:
+    buzz(int(sys.argv[1]) if len(sys.argv) > 1 else 150)

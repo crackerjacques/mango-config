@@ -1,0 +1,2 @@
+# buzz when a charger is plugged in (rgds-rumble works out which change that is)
+SUBSYSTEM=="power_supply", ACTION=="change", RUN+="/usr/bin/rgds-rumble --plugged"
