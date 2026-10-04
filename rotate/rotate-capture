@@ -34,7 +34,7 @@ record)
 	echo "$file" >"$last"
 	wf-recorder "$@" -c libx264 -p preset=ultrafast -p crf=28 -x yuv420p -r 30 \
 		-f "$file" >/dev/null 2>&1 &
-	say "Recording, sound: $sound. L1 + Vol- again to stop."
+	say "Recording, sound: $sound. SELECT + R1 again to stop."
 	;;
 sound)
 	case "$sound" in
