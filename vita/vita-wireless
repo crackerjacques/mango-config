@@ -1,0 +1,38 @@
+#!/bin/sh
+# RG Vita Pro: airplane mode. With any radio on, turns Wi-Fi and Bluetooth
+# off; with all off, puts back the ones that were on before.
+#
+# Uses rfkill, which the logged-in user may drive without root (logind gives
+# the seat /dev/rfkill), and systemd-rfkill keeps the state across reboots.
+
+saved=${XDG_CACHE_HOME:-$HOME/.cache}/vita-wireless
+
+say() {
+	notify-send -a Wireless -t 3000 "$1" 2>/dev/null || echo "$1"
+}
+
+state() {  # "on" if any radio of type $1 is not soft-blocked
+	rfkill -rn -o TYPE,SOFT | grep -q "^$1 unblocked" && echo on || echo off
+}
+
+if [ -z "$(rfkill -rn -o TYPE)" ]; then
+	say "No Wi-Fi or Bluetooth found"
+	exit 1
+fi
+
+if rfkill -rn -o SOFT | grep -q unblocked; then
+	mkdir -p "${saved%/*}"
+	rfkill -rn -o TYPE,SOFT >"$saved"
+	rfkill block all
+	say "Airplane mode on: Wi-Fi and Bluetooth off"
+else
+	if [ -s "$saved" ]; then
+		grep ' unblocked$' "$saved" | while read -r type _; do
+			rfkill unblock "$type"
+		done
+		rm -f "$saved"
+	else
+		rfkill unblock all
+	fi
+	say "Airplane mode off: Wi-Fi $(state wlan), Bluetooth $(state bluetooth)"
+fi

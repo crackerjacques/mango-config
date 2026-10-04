@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Wireless on/off (Airplane mode)
+Comment=Turn Wi-Fi and Bluetooth off, or back on
+Exec=vita-wireless
+Icon=vita-wireless
+Categories=Settings;

@@ -4,9 +4,9 @@
 set -e
 cd "$(dirname "$0")"
 
-install -m 755 vita-pad2key vita-logout vita-screenoff vita-wallpaper vita-cheatsheet vita-brightness vita-bar vita-bar-sensor vita-bar-settings vita-scale vita-rofi vita-leds vita-leds-settings /usr/bin/
+install -m 755 vita-pad2key vita-logout vita-screenoff vita-wallpaper vita-cheatsheet vita-brightness vita-bar vita-bar-sensor vita-bar-settings vita-scale vita-rofi vita-leds vita-leds-settings vita-wireless /usr/bin/
 install -m 644 vita-wallpaper.desktop vita-cheatsheet.desktop vita-brightness.desktop \
-	vita-bar-settings.desktop vita-scale.desktop vita-leds-settings.desktop \
+	vita-bar-settings.desktop vita-scale.desktop vita-leds-settings.desktop vita-wireless.desktop \
 	/usr/share/applications/
 # own icons in hicolor, which every icon theme falls back to
 install -m 644 icons/*.svg /usr/share/icons/hicolor/scalable/apps/

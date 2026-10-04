@@ -29,6 +29,7 @@ ROWS = [
     ("PLAY", "Play / pause", None),
     ("POWER", "Power menu", ["vita-logout"]),
     ("", "Brightness", ["vita-brightness"]),
+    ("", "Wireless on/off (Airplane mode)", ["vita-wireless"]),
     ("", "Stick lights", ["vita-leds-settings"]),
     ("", "Bar settings", ["vita-bar-settings"]),
     ("", "Desktop scale", ["vita-scale"]),
