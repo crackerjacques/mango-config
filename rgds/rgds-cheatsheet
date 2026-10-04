@@ -34,6 +34,7 @@ ROWS = [
     ("POWER", "Power menu", ["rgds-logout"]),
     ("", "Files", ["thunar"]),
     ("", "Brightness", ["rgds-brightness"]),
+    ("", "Wireless on/off (Airplane mode)", ["rgds-wireless"]),
     ("", "Bar settings", ["rgds-bar-settings"]),
     ("", "Desktop scale", ["rgds-scale"]),
 ]

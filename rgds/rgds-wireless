@@ -1,0 +1,44 @@
+#!/bin/sh
+# RG DS: airplane mode.
+
+PATH=$PATH:/usr/sbin:/sbin
+
+saved=${XDG_CACHE_HOME:-$HOME/.cache}/rgds-wireless
+
+say() {
+	notify-send -a Wireless -t 3000 "$1" 2>/dev/null || echo "$1"
+}
+
+state() {
+	rfkill -rn -o TYPE,SOFT | grep -q "^$1 unblocked" && echo on || echo off
+}
+
+if ! command -v rfkill >/dev/null; then
+	say "rfkill is not installed: sudo apt install rfkill"
+	exit 1
+fi
+if ! types=$(rfkill -rn -o TYPE 2>&1); then
+	say "rfkill: $types"
+	exit 1
+fi
+if [ -z "$types" ]; then
+	say "No Wi-Fi or Bluetooth found"
+	exit 1
+fi
+
+if rfkill -rn -o SOFT | grep -q unblocked; then
+	mkdir -p "${saved%/*}"
+	rfkill -rn -o TYPE,SOFT >"$saved"
+	rfkill block all
+	say "Airplane mode on: Wi-Fi and Bluetooth off"
+else
+	if [ -s "$saved" ]; then
+		grep ' unblocked$' "$saved" | while read -r type _; do
+			rfkill unblock "$type"
+		done
+		rm -f "$saved"
+	else
+		rfkill unblock all
+	fi
+	say "Airplane mode off: Wi-Fi $(state wlan), Bluetooth $(state bluetooth)"
+fi
