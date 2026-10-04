@@ -1,9 +1,9 @@
 # mango-config for Raspberry Pi
 
 A [mango](https://github.com/mangowm/mango) Wayland desktop for the Raspberry
-Pi (4, 400, 5, 500, CM5) running Ubuntu 26.04, with a keyboard and mouse, a
-touchscreen, or both. Works on an HDMI monitor, the official Touch Display 2
-and small SPI/DSI touch panels.
+Pi (4, 400, 5, 500, CM5) running Ubuntu 26.04 or Debian forky / sid (Armbian
+has both), with a keyboard and mouse, a touchscreen, or both. Works on an HDMI
+monitor, the official Touch Display 2 and small SPI/DSI touch panels.
 
 Based on [DreamMaoMao/mango-config](https://github.com/DreamMaoMao/mango-config).
 The Anbernic handhelds have their own branches: `anbernic-rg-ds`,
@@ -18,6 +18,10 @@ sudo apt install git
 git clone -b rpi https://github.com/crackerjacques/mango-config
 bash mango-config/mangowm_setup.sh
 ```
+
+On Debian forky (testing) or sid, run `mangowm_setup_debian.sh` instead.
+Debian 13 (trixie), which Raspberry Pi OS is based on, is too old for the
+wlroots mango needs.
 
 It asks which input method to set up (none, Japanese, Chinese, Korean,
 Vietnamese) and to confirm, then:
