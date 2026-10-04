@@ -1,0 +1,15 @@
+/* mangobar color theme: black. Read by rpi-bar-settings; copy this
+   file to ~/.config/rpi-bar/themes/<name>.css to make your own. */
+@define-color base     #141414;  /* plain module background */
+@define-color text     #e6e6e6;  /* text on base */
+@define-color ink      #e6e6e6;  /* text on colored pills */
+@define-color tag      #1c1c1c;  /* tag buttons */
+@define-color active   #d0d0d0;  /* focused tag, power */
+@define-color urgent   #7a2020;  /* urgent tag */
+@define-color accent1  #1a1a1a;  /* volume, temperature */
+@define-color accent2  #1e1e1e;  /* battery, date, network, power draw */
+@define-color accent3  #222222;  /* clock, cpu, disk, uptime */
+@define-color accent4  #262626;  /* window title, layout, brightness */
+@define-color accent5  #1a1a1a;  /* memory, wifi */
+@define-color fade     #3a3a3a;  /* gradient highlight */
+@define-color menu     #0e0e0e;  /* tray menu background */

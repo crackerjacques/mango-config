@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Wallpaper
+Comment=Pick the wallpaper and how it is laid out
+Exec=rpi-wallpaper
+Icon=rpi-wallpaper
+Categories=Settings;

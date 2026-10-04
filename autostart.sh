@@ -13,13 +13,14 @@ systemctl --user restart xdg-desktop-portal &
 swaync -c ~/.config/mango/swaync/config.jsonc -s ~/.config/mango/swaync/style.css >/dev/null 2>&1 &
 
 # night light
-wlsunset -T 3501 -t 3500 >/dev/null 2>&1 &
+# wlsunset -T 3501 -t 3500 >/dev/null 2>&1 &
 
 # wallpaper
-swaybg -i ~/.config/mango/wallpaper/wallpaper.png >/dev/null 2>&1 &
+sh ~/.config/mango/scripts/wallpaper.sh >/dev/null 2>&1 &
 
 # top bar
-mangobar -c ~/.config/mango/mangobar/config.jsonc -s ~/.config/mango/mangobar/style.css 2>&1 &
+# rpi-bar picks the settings from rpi-bar-settings, or the stock config
+rpi-bar >/dev/null 2>&1 &
 
 # xwayland dpi scale
 echo "Xft.dpi: 140" | xrdb -merge #dpi缩放
@@ -41,7 +42,10 @@ blueman-applet >/dev/null 2>&1 &
 nm-applet >/dev/null 2>&1 &
 
 # Permission authentication
-/usr/lib/xfce-polkit/xfce-polkit >/dev/null 2>&1 &
+for agent in /usr/lib/xfce-polkit/xfce-polkit /usr/libexec/xfce-polkit \
+	/usr/libexec/xfce-polkit/xfce-polkit; do
+	[ -f "$agent" ] && [ -x "$agent" ] && { "$agent" >/dev/null 2>&1 & break; }
+done
 
 # inhibit by audio
 sway-audio-idle-inhibit >/dev/null 2>&1 &

@@ -1,0 +1,15 @@
+/* mangobar color theme: nord. Read by rpi-bar-settings; copy this
+   file to ~/.config/rpi-bar/themes/<name>.css to make your own. */
+@define-color base     #3b4252;  /* plain module background */
+@define-color text     #eceff4;  /* text on base */
+@define-color ink      #2e3440;  /* text on colored pills */
+@define-color tag      #434c5e;  /* tag buttons */
+@define-color active   #88c0d0;  /* focused tag, power */
+@define-color urgent   #bf616a;  /* urgent tag */
+@define-color accent1  #ebcb8b;  /* volume, temperature */
+@define-color accent2  #a3be8c;  /* battery, date, network, power draw */
+@define-color accent3  #d8dee9;  /* clock, cpu, disk, uptime */
+@define-color accent4  #b48ead;  /* window title, layout, brightness */
+@define-color accent5  #81a1c1;  /* memory, wifi */
+@define-color fade     #eceff4;  /* gradient highlight */
+@define-color menu     #2e3440;  /* tray menu background */

@@ -1,0 +1,14 @@
+#!/bin/sh
+# Raspberry Pi: (re)start mangobar. 
+
+u=${XDG_CONFIG_HOME:-$HOME/.config}/rpi-bar
+m=$HOME/.config/mango/mangobar
+cfg=$m/config.jsonc
+css=$m/style.css
+[ -f "$u/config.jsonc" ] && cfg=$u/config.jsonc
+[ -f "$u/style.css" ] && css=$u/style.css
+
+if pkill -x mangobar && [ "$1" = --toggle ]; then
+	exit 0
+fi
+exec mangobar -c "$cfg" -s "$css"

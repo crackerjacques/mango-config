@@ -1,0 +1,38 @@
+#!/bin/sh
+# Raspberry Pi: one-line readings for mangobar's custom modules, as placed by
+# rpi-bar-settings. Prints "--" when the reading is not available.
+case "$1" in
+temp)	# hottest thermal zone
+	t=
+	for f in /sys/class/thermal/thermal_zone*/temp; do
+		v=$(cat "$f" 2>/dev/null) || continue
+		[ -z "$t" ] || [ "$v" -gt "$t" ] && t=$v
+	done
+	[ -n "$t" ] && echo "$((t / 1000))°C" || echo "--" ;;
+watt)	# battery power draw
+	for b in /sys/class/power_supply/*; do
+		[ "$(cat "$b/type" 2>/dev/null)" = Battery ] || continue
+		if [ -r "$b/power_now" ]; then
+			awk '{ printf "%.1fW\n", ($1 < 0 ? -$1 : $1) / 1e6 }' "$b/power_now"
+		elif [ -r "$b/current_now" ] && [ -r "$b/voltage_now" ]; then
+			awk -v v="$(cat "$b/voltage_now")" \
+				'{ c = $1 < 0 ? -$1 : $1; printf "%.1fW\n", c * v / 1e12 }' "$b/current_now"
+		else
+			continue
+		fi
+		exit 0
+	done
+	echo "--" ;;
+wifi)	# link quality of the first wireless interface
+	awk 'NR > 2 { q = $3; sub(/\./, "", q); printf "%d%%\n", q * 100 / 70; f = 1; exit }
+	     END { if (!f) print "off" }' /proc/net/wireless 2>/dev/null || echo "--" ;;
+disk)	# free space on /
+	df -h / | awk 'NR == 2 { print $4 }' ;;
+uptime)
+	awk '{ s = int($1); printf "%dh%02dm\n", s / 3600, s % 3600 / 60 }' /proc/uptime ;;
+load)
+	cut -d' ' -f1 /proc/loadavg ;;
+*)
+	echo "usage: rpi-bar-sensor temp|watt|wifi|disk|uptime|load" >&2
+	exit 1 ;;
+esac

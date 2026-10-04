@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Bar Settings
+Comment=mangobar colors, shape and what the panel and external-screen bars show
+Exec=rpi-bar-settings
+Icon=rpi-bar-settings
+Categories=Settings;

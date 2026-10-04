@@ -1,0 +1,23 @@
+#!/bin/sh
+# Raspberry Pi: blank every screen until the next key, mouse move or touch.
+
+flag=${XDG_RUNTIME_DIR:-/tmp}/rpi-screenoff
+outputs=$flag.outputs
+
+if [ "$1" = wake ]; then
+	[ -f "$outputs" ] && while read -r o; do
+		mmsg dispatch wakeup_monitor,"$o"
+	done <"$outputs"
+	[ -s "$flag" ] && kill "$(cat "$flag")" 2>/dev/null
+	(sleep 1; rm -f "$flag" "$outputs") &
+	exit 0
+fi
+
+[ -e "$flag" ] && exit 0
+echo $$ >"$flag"
+# output names are the lines wlr-randr does not indent
+wlr-randr | grep -v '^ ' | cut -d' ' -f1 >"$outputs"
+while read -r o; do
+	mmsg dispatch sleep_monitor,"$o"
+done <"$outputs"
+exec swayidle timeout 1 true resume "rpi-screenoff wake"

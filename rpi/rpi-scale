@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+# Raspberry Pi: scale and rotation for every connected screen (HDMI, the Touch
+# Display 2, small SPI panels). Apply tries it; unless Keep is pressed it goes
+# back after 15 s, so a setting that leaves the screen unusable undoes itself.
+#
+# The screens come from wlr-randr; the rules go to ~/.config/rpi-scale/
+# monitor.conf, which monitor.conf sources.
+
+import json
+import os
+import subprocess
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, GLib, Gtk
+
+CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"),
+                    "rpi-scale")
+RULES = os.path.join(CONF, "monitor.conf")
+KEEP_SECONDS = 15
+SCALES = [2.0, 1.75, 1.5, 1.25, 1.0, 0.75]
+# (label, mango rr, wlr-randr transform)
+ROTATIONS = [("Normal", 0, "normal"), ("90°", 1, "90"),
+             ("180°", 2, "180"), ("270°", 3, "270")]
+
+APP_CSS = """
+label { font-family: Hack; font-size: 15px; }
+label.head { color: #6b5320; font-weight: bold; }
+label.warn { color: #c01c28; }
+button.apply { background: #ac9259; background-image: none; }
+button.apply label { color: #000000; font-weight: bold; }
+"""
+
+
+def screens():
+    """[(name, description, width, height, scale, rr)] of the enabled outputs,
+    width x height being the current mode before rotation."""
+    try:
+        out = subprocess.run(["wlr-randr", "--json"], capture_output=True, text=True).stdout
+        heads = json.loads(out)
+    except (OSError, ValueError):
+        return []
+    found = []
+    for h in heads:
+        if not h.get("enabled"):
+            continue
+        mode = next((m for m in h.get("modes", []) if m.get("current")), None)
+        if not mode:
+            continue
+        rr = next((r for _, r, t in ROTATIONS if t == h.get("transform")), 0)
+        desc = " ".join(x for x in (h.get("make"), h.get("model")) if x and x != "Unknown")
+        found.append((h["name"], desc, mode["width"], mode["height"],
+                      float(h.get("scale") or 1), rr))
+    return found
+
+
+def label_of(scale, w, h, rr):
+    if rr % 2:
+        w, h = h, w
+    return f"{scale:.2f}  -  {round(w / scale)}x{round(h / scale)}"
+
+
+def write_rules(text):
+    os.makedirs(CONF, exist_ok=True)
+    if text is None:
+        try:
+            os.remove(RULES)
+        except FileNotFoundError:
+            pass
+    else:
+        with open(RULES, "w") as f:
+            f.write(text)
+    subprocess.run(["mmsg", "dispatch", "reload_config"])
+
+
+class Scale(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Display")
+        self.pending = None
+        self.set_default_size(460, -1)
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER,
+                                    propagate_natural_height=True, vexpand=True)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8,
+                      margin_top=16, margin_bottom=8, margin_start=16, margin_end=16)
+        scroll.set_child(box)
+        outer.append(scroll)
+        self.set_child(outer)
+
+        self.screens = screens()
+        self.picks = {}
+        first = None
+        if not self.screens:
+            box.append(Gtk.Label(label="No screen found (wlr-randr gave nothing)", xalign=0))
+        for name, desc, w, h, scale, rr in self.screens:
+            head = Gtk.Label(label=f"{name}  {desc}".strip(), xalign=0, wrap=True)
+            head.add_css_class("head")
+            box.append(head)
+
+            rot = Gtk.DropDown.new_from_strings([r[0] for r in ROTATIONS])
+            rot.set_selected(next(i for i, r in enumerate(ROTATIONS) if r[1] == rr))
+            sc = Gtk.DropDown.new_from_strings([label_of(s, w, h, rr) for s in SCALES])
+            sc.set_selected(min(range(len(SCALES)), key=lambda i: abs(SCALES[i] - scale)))
+            # the sizes shown follow the rotation picked
+            rot.connect("notify::selected", self.relabel, sc, w, h)
+
+            row = Gtk.Box(spacing=8)
+            row.append(Gtk.Label(label="Rotation"))
+            row.append(rot)
+            box.append(row)
+            row = Gtk.Box(spacing=8)
+            row.append(Gtk.Label(label="Scale"))
+            row.append(sc)
+            box.append(row)
+            self.picks[name] = (rot, sc)
+            first = first or rot
+
+        foot = Gtk.Box(spacing=10, margin_top=8, margin_bottom=16,
+                       margin_start=16, margin_end=16)
+        self.status = Gtk.Label(xalign=0, hexpand=True, wrap=True)
+        self.keep = Gtk.Button(label="Keep", visible=False)
+        self.keep.connect("clicked", self.on_keep)
+        go = Gtk.Button(label="Apply", sensitive=bool(self.screens))
+        go.add_css_class("apply")
+        go.connect("clicked", self.on_apply)
+        foot.append(self.status)
+        foot.append(self.keep)
+        foot.append(go)
+        outer.append(foot)
+
+        self.present()
+        (first or go).grab_focus()
+
+    def relabel(self, rot, _pspec, sc, w, h):
+        rr = ROTATIONS[rot.get_selected()][1]
+        keep = sc.get_selected()
+        sc.set_model(Gtk.StringList.new([label_of(s, w, h, rr) for s in SCALES]))
+        sc.set_selected(keep)
+
+    def rules(self):
+        lines = ["# written by rpi-scale"]
+        for name, (rot, sc) in self.picks.items():
+            rr = ROTATIONS[rot.get_selected()][1]
+            scale = SCALES[sc.get_selected()]
+            lines.append(f"monitorrule=name:^{name}$,rr:{rr},scale:{scale:.6f}")
+        return "\n".join(lines) + "\n"
+
+    def on_apply(self, _button):
+        if self.pending:
+            self.on_keep(None)
+        try:
+            with open(RULES) as f:
+                before = f.read()
+        except OSError:
+            before = None
+        write_rules(self.rules())
+        timer = GLib.timeout_add_seconds(1, self.tick)
+        self.pending = [before, timer, KEEP_SECONDS]
+        self.keep.set_visible(True)
+        self.keep.grab_focus()
+        self.tick(count=False)
+
+    def tick(self, count=True):
+        if not self.pending:
+            return False
+        if count:
+            self.pending[2] -= 1
+        if self.pending[2] <= 0:
+            before = self.pending[0]
+            self.pending = None
+            self.keep.set_visible(False)
+            write_rules(before)
+            self.say("Not kept - back to the previous setting")
+            return False
+        self.say(f"Keep this? Going back in {self.pending[2]} s", warn=True)
+        return True
+
+    def on_keep(self, _button):
+        if self.pending:
+            GLib.source_remove(self.pending[1])
+            self.pending = None
+        self.keep.set_visible(False)
+        self.say("Kept")
+
+    def say(self, text, warn=False):
+        self.status.set_text(text)
+        if warn:
+            self.status.add_css_class("warn")
+        else:
+            self.status.remove_css_class("warn")
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+    def do_close_request(self):
+        if self.pending:
+            GLib.source_remove(self.pending[1])
+            write_rules(self.pending[0])
+            self.pending = None
+        return False
+
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:
+        win.present()
+        return
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):
+        provider.load_from_string(APP_CSS)
+    else:
+        provider.load_from_data(APP_CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    Scale(app)
+
+
+app = Gtk.Application(application_id="org.armbian.RpiScale")
+app.connect("activate", on_activate)
+app.run(None)

@@ -1,0 +1,15 @@
+/* mangobar color theme: gruvbox. Read by rpi-bar-settings; copy this
+   file to ~/.config/rpi-bar/themes/<name>.css to make your own. */
+@define-color base     #504945;  /* plain module background */
+@define-color text     #ebdbb2;  /* text on base */
+@define-color ink      #1b1a1a;  /* text on colored pills */
+@define-color tag      #403b36;  /* tag buttons */
+@define-color active   #83a598;  /* focused tag, power */
+@define-color urgent   #fb4934;  /* urgent tag */
+@define-color accent1  #e3ac2b;  /* volume, temperature */
+@define-color accent2  #b8bb26;  /* battery, date, network, power draw */
+@define-color accent3  #c4b595;  /* clock, cpu, disk, uptime */
+@define-color accent4  #bd788a;  /* window title, layout, brightness */
+@define-color accent5  #83a598;  /* memory, wifi */
+@define-color fade     #fbf1c7;  /* gradient highlight */
+@define-color menu     #241f19;  /* tray menu background */

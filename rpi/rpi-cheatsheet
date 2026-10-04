@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+# Raspberry Pi: the keyboard shortcuts under mango. Rows with an action run it
+# when tapped (or picked with the arrows and Enter) and close the sheet; the
+# rest are for reading. Super+F1 again or Esc closes it.
+#
+# Keep this in step with bind.conf.
+import subprocess
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, Gtk
+
+WVKBD = ('pkill -x wvkbd-mobintl || wvkbd-mobintl -L 240 -H 280 --fn "Sans 16" '
+         '--landscape-layers full,special')
+
+# (keys, what they do, command run on tap or None)
+ROWS = [
+    ("Super", "App menu (tap)", ["rpi-rofi"]),
+    ("Alt + Return", "Terminal", ["foot"]),
+    ("Super + F2", "Files", ["thunar"]),
+    ("Super + PgUp", "On-screen keyboard", ["sh", "-c", WVKBD]),
+    ("Super + F1", "This cheat sheet", None),
+    ("Alt + q", "Close window", None),
+    ("Alt + Tab", "Switch window", None),
+    ("Alt + arrows", "Focus the window that way", None),
+    ("Super+Shift + arrows", "Swap the window with the one that way", None),
+    ("Super + ←/→", "Previous / next desktop", None),
+    ("Ctrl + 1-9", "Go to desktop 1-9", None),
+    ("Alt + 1-9", "Send the window to desktop 1-9", None),
+    ("Alt + f", "Fullscreen", None),
+    ("Alt + \\", "Floating on / off", None),
+    ("Ctrl+Alt + a", "Screenshot of an area", None),
+    ("Ctrl + Space", "Input method on / off", ["fcitx5-remote", "-t"]),
+    ("Super + h", "Bar on / off", ["rpi-bar", "--toggle"]),
+    ("Super + l", "Lock the screen", ["swaylock", "-f", "-c", "000000"]),
+    ("Super + Esc", "Screen off (any key or touch wakes)", ["rpi-screenoff"]),
+    ("Super + r", "Reload the mango config", None),
+    ("POWER", "Power menu (Pi 5 button)", ["rpi-logout"]),
+    ("", "Display (scale, rotation)", ["rpi-scale"]),
+    ("", "Brightness", ["rpi-brightness"]),
+    ("", "Wireless on/off (Airplane mode)", ["rpi-wireless"]),
+    ("", "Bar settings", ["rpi-bar-settings"]),
+    ("", "Wallpaper", ["rpi-wallpaper"]),
+]
+
+CSS = """
+window { background: #201b14; }
+label { color: #d1b88e; font-family: Hack; font-size: 16px; }
+label.key { color: #ac9259; font-weight: bold; }
+label.dim { color: #888888; }
+button {
+    background: #201b14; background-image: none; box-shadow: none;
+    border: 3px solid #201b14; border-radius: 8px; padding: 4px 8px;
+}
+button:focus { border-color: #d1b88e; }
+button:hover, button:active { background: #3a3125; }
+.row { padding: 4px 11px; }
+"""
+
+
+def load_css():
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):
+        provider.load_from_string(CSS)
+    else:
+        provider.load_from_data(CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+
+def row_content(key, text, runnable):
+    box = Gtk.Box(spacing=12)
+    k = Gtk.Label(label=key, xalign=0, width_chars=20)
+    k.add_css_class("key")
+    t = Gtk.Label(label=text, xalign=0, hexpand=True)
+    if not runnable:
+        t.add_css_class("dim")
+    box.append(k)
+    box.append(t)
+    return box
+
+
+class CheatSheet(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Raspberry Pi Shortcuts")
+        self.set_default_size(640, 600)
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2,
+                      margin_top=8, margin_bottom=8, margin_start=8, margin_end=8)
+        scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
+        scroll.set_child(box)
+        self.set_child(scroll)
+
+        first = None
+        for key, text, cmd in ROWS:
+            content = row_content(key, text, cmd is not None)
+            if cmd is None:
+                content.add_css_class("row")
+                box.append(content)
+                continue
+            b = Gtk.Button(child=content)
+            b.connect("clicked", self.run, cmd)
+            box.append(b)
+            first = first or b
+
+        self.present()
+        first.grab_focus()
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+    def run(self, _button, cmd):
+        self.close()
+        subprocess.Popen(cmd, start_new_session=True)
+
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:  # second launch (R2 again): close the open sheet
+        win.close()
+        return
+    load_css()
+    CheatSheet(app)
+
+
+app = Gtk.Application(application_id="org.armbian.RpiCheatsheet")
+app.connect("activate", on_activate)
+app.run(None)

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Brightness
+Comment=Screen brightness slider
+Exec=rpi-brightness
+Icon=rpi-brightness
+Categories=Settings;

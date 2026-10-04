@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+# Raspberry Pi: pick the wallpaper and how it is laid out.
+
+import os
+import shutil
+import subprocess
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, Gio, GLib, Gtk
+
+CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"),
+                    "rpi-wallpaper")
+DEFAULT = os.path.expanduser("~/.config/mango/wallpaper/wallpaper.png")
+APPLY = os.path.expanduser("~/.config/mango/scripts/wallpaper.sh")
+
+SCREENS = [("screen", "Wallpaper")]
+
+# swaybg -m modes, with the closest preview fit for each
+MODES = [
+    ("fill", "Fill (zoom)", Gtk.ContentFit.COVER),
+    ("fit", "Fit", Gtk.ContentFit.CONTAIN),
+    ("stretch", "Stretch", Gtk.ContentFit.FILL),
+    ("center", "Center", Gtk.ContentFit.SCALE_DOWN),
+    ("tile", "Tile", Gtk.ContentFit.SCALE_DOWN),
+]
+
+CSS = """
+window { background: #201b14; }
+label { color: #d1b88e; font-family: Hack; font-size: 18px; }
+picture { border-radius: 8px; }
+button {
+    background: #201b14; background-image: none; box-shadow: none;
+    border: 3px solid #ac9259; border-radius: 10px; padding: 8px 16px;
+}
+button:focus { border-color: #d1b88e; }
+button:hover, button:active { background: #ac9259; }
+button:hover label, button:active label { color: #201b14; }
+dropdown > button { border-color: #888888; padding: 4px 12px; }
+"""
+
+
+def load_css():
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):
+        provider.load_from_string(CSS)
+    else:
+        provider.load_from_data(CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+
+def current(screen):
+    mine = os.path.join(CONF, screen)
+    return mine if os.path.exists(mine) else DEFAULT
+
+
+def current_mode(screen):
+    try:
+        with open(os.path.join(CONF, screen + ".mode")) as f:
+            mode = f.read().strip()
+    except OSError:
+        mode = ""
+    return mode if mode in [m for m, _, _ in MODES] else "fill"
+
+
+def apply():
+    subprocess.Popen(["sh", APPLY], start_new_session=True,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def start_folder():
+    pics = os.path.expanduser("~/Pictures")
+    return pics if os.path.isdir(pics) else os.path.expanduser("~")
+
+
+class Wallpaper(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Wallpaper")
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
+                      margin_top=16, margin_bottom=16, margin_start=16, margin_end=16)
+        self.set_child(box)
+
+        self.pictures = {}
+        first = None
+        for screen, title in SCREENS:
+            row = Gtk.Box(spacing=16)
+            pic = Gtk.Picture(can_shrink=True)
+            pic.set_size_request(320, 240)
+            pic.set_filename(current(screen))
+            self.pictures[screen] = pic
+
+            side = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
+                           valign=Gtk.Align.CENTER)
+            side.append(Gtk.Label(label=title, xalign=0))
+            b = Gtk.Button(label="Choose…")
+            b.connect("clicked", self.choose, screen)
+            side.append(b)
+            mode = Gtk.DropDown.new_from_strings([label for _, label, _ in MODES])
+            mode.set_selected([m for m, _, _ in MODES].index(current_mode(screen)))
+            mode.connect("notify::selected", self.mode_changed, screen)
+            side.append(mode)
+            self.show_fit(screen, mode.get_selected())
+
+            row.append(pic)
+            row.append(side)
+            box.append(row)
+            first = first or b
+
+        self.present()
+        first.grab_focus()
+
+    def show_fit(self, screen, index):
+        self.pictures[screen].set_content_fit(MODES[index][2])
+
+    def mode_changed(self, dropdown, _pspec, screen):
+        index = dropdown.get_selected()
+        os.makedirs(CONF, exist_ok=True)
+        with open(os.path.join(CONF, screen + ".mode"), "w") as f:
+            f.write(MODES[index][0] + "\n")
+        self.show_fit(screen, index)
+        apply()
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+    def choose(self, _button, screen):
+        images = Gtk.FileFilter(name="Images")
+        images.add_pixbuf_formats()
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(images)
+
+        dialog = Gtk.FileDialog(title=dict(SCREENS)[screen], filters=filters)
+        dialog.set_initial_folder(Gio.File.new_for_path(start_folder()))
+        dialog.open(self, None, self.chosen, screen)
+
+    def chosen(self, dialog, result, screen):
+        try:
+            f = dialog.open_finish(result)
+        except GLib.Error:  # cancelled
+            return
+        os.makedirs(CONF, exist_ok=True)
+        dest = os.path.join(CONF, screen)
+        shutil.copyfile(f.get_path(), dest)
+        self.pictures[screen].set_filename(dest)
+        apply()
+
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:
+        win.present()
+        return
+    load_css()
+    Wallpaper(app)
+
+
+app = Gtk.Application(application_id="org.armbian.RpiWallpaper")
+app.connect("activate", on_activate)
+app.run(None)

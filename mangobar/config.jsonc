@@ -104,10 +104,10 @@
             "󰂂",
             "󰁹"
         ],
-        // "icon-charging": "󰂄",
-        // "icon-full": "󰁹",
+        "icon-charging": "󰂄",
+        "icon-full": "󰁹",
         "icon-ac": "",
-        "hide-on-ac": true
+        "hide-on-ac": false
     },
     "clock#date": {
         "format": " {:L%b%d·%A}"
@@ -121,7 +121,7 @@
     },
     "custom/power": {
         "format": "󰣇",
-        "on-click": "wlogout -C ~/.config/mango/wlogout/style.css -l ~/.config/mango/wlogout/layout -b 6 --protocol layer-shell",
+        "on-click": "rpi-logout",
         "on-click-right": "sleep 0.1s && swaync-client -t -sw"
     },
     "custom/clock": {

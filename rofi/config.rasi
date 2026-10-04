@@ -18,7 +18,7 @@
 }
 
 configuration {
-    font: "Maple Mono NF CN bold 18";
+    font: "Maple Mono NF CN bold 14";
     modi: "drun";
     show-icons: true;
     sort: true;
@@ -28,7 +28,7 @@ configuration {
 
 listview {
     columns: 1;
-    lines: 7;
+    lines: 10;
     fixed-height: true;
     fixed-columns: true;
     cycle: false;
@@ -38,8 +38,8 @@ listview {
 
 window {
     transparency: "real";
-    width: 750px;
-    height: 500px;
+    width: 680px;
+    height: 50%;
     border-radius: @b-radius;
     background-color: @wbg-color;
     border: 4px solid;

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Keyboard Shortcuts
+Comment=The mango keyboard shortcuts; tap a row to run it
+Exec=rpi-cheatsheet
+Icon=rpi-cheatsheet
+Categories=Utility;

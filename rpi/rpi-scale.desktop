@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Display
+Comment=Scale and rotation of each screen
+Exec=rpi-scale
+Icon=rpi-scale
+Categories=Settings;
