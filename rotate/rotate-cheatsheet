@@ -28,6 +28,7 @@ ROWS = [
     ("R3", "Tab", None),
     ("POWER", "Power menu", ["rotate-logout"]),
     ("", "Brightness", ["rotate-brightness"]),
+    ("", "Wireless on/off (Airplane mode)", ["rotate-wireless"]),
     ("", "Bar settings", ["rotate-bar-settings"]),
     ("", "Desktop scale", ["rotate-scale"]),
     ("", "Wallpaper", ["rotate-wallpaper"]),

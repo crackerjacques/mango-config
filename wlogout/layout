@@ -7,14 +7,14 @@
 
 {
     "label" : "shutdown",
-    "action" : "shutdown -h now",
+    "action" : "systemctl poweroff",
     "text" : "Shutdown",
     "keybind" : "d"
 }
 
 {
     "label" : "reboot",
-    "action" : "reboot",
+    "action" : "systemctl reboot",
     "text" : "Reboot",
     "keybind" : "r"
 }
