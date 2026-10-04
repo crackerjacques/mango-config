@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-# RG Vita Pro: settings for the stick rings (vita-leds). Every change is
-# written to /etc/vita-leds.json straight away and the rings follow within a
-# second, so there is no Apply. D-pad and A work everywhere; B (Esc) closes.
+# RG Vita Pro: settings for the stick rings
+
 import json
 import subprocess
 
@@ -55,7 +54,7 @@ spinbutton { background: #2b241b; color: #d1b88e; border-radius: 8px; }
 
 def load_css():
     provider = Gtk.CssProvider()
-    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+    if hasattr(provider, "load_from_string"):
         provider.load_from_string(CSS)
     else:
         provider.load_from_data(CSS, -1)
@@ -202,7 +201,7 @@ class LedSettings(Gtk.ApplicationWindow):
             b = buttons.get(self.s[key].lower())
             if b:
                 b.set_active(True)
-            else:  # a colour from the file that is not on the palette
+            else:
                 for other in buttons.values():
                     other.set_active(False)
         self.setters.append(put)
@@ -231,7 +230,7 @@ class LedSettings(Gtk.ApplicationWindow):
 
     def save(self):
         try:
-            with open(CONF, "w") as f:  # in place: /etc itself is not ours
+            with open(CONF, "w") as f:
                 json.dump(self.s, f, indent=2)
         except OSError:
             self.warn.set_text(f"Cannot write {CONF}. Run once:\n"

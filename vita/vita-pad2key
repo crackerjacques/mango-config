@@ -1,20 +1,8 @@
 #!/usr/bin/env python3
-# RG Vita Pro: gamepad/HOME buttons -> keyboard keys (evdev/uinput), mango
-# variant of the bsp's /usr/bin/vita-pad2key. install.sh puts it over that file
-# and the existing vita-pad2key.service runs it unchanged.
-#  - L1/R1: Super+PageUp / Super+PageDown (wvkbd / foot in bind.conf)
-#  - L2: held Super+Shift, so L2 + d-pad swaps the window with its neighbour
-#    (exchange_client); R2: Super+F1 (vita-cheatsheet)
-#  - R3/L3: Tab / Shift+Tab
-#  - SELECT: held Alt, so SELECT + d-pad moves focus to the next window
-#    (Alt+arrows, focusdir); START + SELECT is screen off in bind.conf
-#  - Y: Backspace
-#  - the gpio HOME key (BTN_MODE): F13, input method on/off (bind.conf);
-#    the adc one (BTN_Z) switches windows
+# RG Vita Pro: gamepad/HOME buttons -> keyboard keys (evdev/uinput).
 
 import time, select, evdev
 from evdev import ecodes as e, UInput
-
 
 MAP = {
     e.BTN_DPAD_UP: e.KEY_UP,     e.BTN_DPAD_DOWN: e.KEY_DOWN,
@@ -34,20 +22,14 @@ COMBO = {
     e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
-    e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
+    e.BTN_TR:     (e.KEY_F14,),
 }
-# Held for as long as the button is: modifiers pressed in this order and
-# released in reverse, so Super is never the last key down and letting go of
-# the button is not taken for a bare Super tap (rofi).
+
 HOLD = {
     e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFTSHIFT),
 }
 ALL = set(MAP) | set(COMBO) | set(HOLD)
 
-# The buttons are split over two devices (gpio-keys pad, adc-keys HOME), so any
-# device carrying a mapped code is taken. Anything with axes is skipped: that
-# is the stick MCU or a USB controller, whose buttons must not turn into
-# desktop keys.
 def sources():
     out = {}
     for p in evdev.list_devices():
@@ -77,8 +59,6 @@ for _seq in list(COMBO.values()) + list(HOLD.values()):
 
 ui = UInput({e.EV_KEY: sorted(_keys)}, name="vita-pad2key")
 
-# Keys this process is currently holding down, per source. A device can vanish
-# mid-press, and without this the virtual keyboard keeps the key down for good.
 held = {}
 
 def drop(fd):

@@ -14,6 +14,7 @@ ROWS = [
     ("START", "App menu (tap)", ["vita-rofi"]),
     ("L1", "On-screen keyboard", ["sh", "-c", WVKBD]),
     ("R1", "Terminal", ["foot"]),
+    ("START + R1", "Files", ["thunar"]),
     ("L2 + D-pad", "Swap the window with the one that way", None),
     ("R2", "This cheat sheet", None),
     ("SELECT + D-pad", "Focus the next window that way", None),
@@ -34,7 +35,6 @@ ROWS = [
     ("", "Bar settings", ["vita-bar-settings"]),
     ("", "Desktop scale", ["vita-scale"]),
     ("", "Wallpaper", ["vita-wallpaper"]),
-    ("", "Files", ["thunar"]),
 ]
 
 CSS = """
@@ -54,7 +54,7 @@ button:hover, button:active { background: #3a3125; }
 
 def load_css():
     provider = Gtk.CssProvider()
-    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+    if hasattr(provider, "load_from_string"):
         provider.load_from_string(CSS)
     else:
         provider.load_from_data(CSS, -1)

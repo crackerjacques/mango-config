@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 # RG Vita Pro: power menu, run by the power key (bind.conf) and the mangobar power
-# icon. Launching it again while it is open closes it.
-#
-# Not wlogout: wlogout quits on any press that reaches its background, and on
-# a touchscreen the tap on a button reaches it too, so the menu closed instead
-# of acting. Pressing the power key while the screen is off (vita-screenoff)
-# only wakes it.
+# icon.
+
 import os
 import subprocess
 
@@ -38,7 +34,7 @@ button:hover label, button:active label { color: #201b14; }
 
 def load_css():
     provider = Gtk.CssProvider()
-    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+    if hasattr(provider, "load_from_string"):
         provider.load_from_string(CSS)
     else:
         provider.load_from_data(CSS, -1)

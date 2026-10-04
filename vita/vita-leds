@@ -1,15 +1,6 @@
 #!/usr/bin/env python3
 # RG Vita Pro: the RGB rings around the sticks as a status light.
-#
-# Runs as root from vita-leds.service and works at the login screen too.
-# Settings are read from /etc/vita-leds.json, which vita-leds-settings writes
-# (install.sh makes it writable by the user). Changes show within a second.
-#
-# The rings come from the spi-mcu-joypad driver as two multicolor LEDs,
-# <spi dev>::joystick-left and ::joystick-right. The MCU takes one brightness
-# for both, the left ring's, so a single ring is turned off by its colour
-# (0 0 0), never by its brightness. led_mode / led_speed / led_switch on the
-# SPI device pick the MCU's own animations; 1 is plain colour.
+
 import glob
 import json
 import os
@@ -18,24 +9,24 @@ import sys
 import time
 
 CONF = "/etc/vita-leds.json"
-TICK = 0.5          # blink half-period, and how often settings are checked
-BATTERY_EVERY = 10  # ticks between battery reads (the fuel gauge is slow)
+TICK = 0.5
+BATTERY_EVERY = 10
 
 DEFAULTS = {
-    "mode": "status",       # status, color, effect, off
-    "level": 96,            # brightness for both rings, 1-255
-    "rings": "left",        # status on: left, right, both
+    "mode": "status",
+    "level": 96,
+    "rings": "left",
     "charging": "#ff6000",
     "full": "#00ff40",
-    "battery": "#000000",   # on battery above "low_at": dark
+    "battery": "#000000",
     "low": "#ff0000",
-    "low_at": 15,           # % at or below which "low" shows
-    "blink_at": 5,          # % at or below which "low" blinks
-    "left": "#ffffff",      # mode color
+    "low_at": 15,
+    "blink_at": 5,
+    "left": "#ffffff",
     "right": "#ffffff",
-    "effect": 2,            # mode effect: the MCU's led_mode
+    "effect": 2,
     "speed": 1,
-    "screen_off": "dim",    # while the panel is off: off, dim, keep
+    "screen_off": "dim",
 }
 
 
@@ -112,14 +103,13 @@ def battery():
             return "charging", pct
         if status == "Full" or (online and pct >= 100):
             return "full", pct
-        if online:  # plugged in but not charging (held back, or topped off)
+        if online:
             return "full", pct
         return "battery", pct
     return None
 
 
 def screen_off():
-    # vita-screenoff keeps this flag while the panel is blanked
     if glob.glob("/run/user/*/vita-screenoff"):
         return True
     for bl in glob.glob("/sys/class/backlight/*"):

@@ -52,6 +52,7 @@ mmsg dispatch reload_config
 | START (hold) + d-pad ←/→ | Previous / next desktop |
 | L1 | On-screen keyboard |
 | R1 | Terminal |
+| START (hold) + R1 | Files (Thunar) |
 | L2 (hold) + d-pad | Swap the window with the one on that side |
 | R2 | Controls cheat sheet (tap a row to run it) |
 | SELECT (hold) + d-pad | Focus the window on that side |

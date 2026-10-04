@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-# RG Vita Pro: screen brightness slider. There are no brightness keys on the
-# unit, so this is the way to change it. Drag the slider, or use d-pad
-# left/right; B (Esc) closes.
-#
-# Goes through brightnessctl, which asks logind when the backlight is not
-# writable by the user. Kept above 5% so the panel can never be turned black.
+# RG Vita Pro: screen brightness slider.
+
 import subprocess
 
 import gi
@@ -25,7 +21,7 @@ scale:focus slider { outline: 3px solid #d1b88e; outline-offset: 2px; }
 
 def load_css():
     provider = Gtk.CssProvider()
-    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+    if hasattr(provider, "load_from_string"):
         provider.load_from_string(CSS)
     else:
         provider.load_from_data(CSS, -1)
