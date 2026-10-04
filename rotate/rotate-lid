@@ -1,10 +1,5 @@
 #!/bin/bash
 # RG Rotate: lid switch handler, run by the switchbind lines in bind.conf.
-#
-# What closing the lid does is picked with rotate-lid-settings and kept in
-# ~/.config/rotate-lid: none, off (panel power only) or sleep. logind must
-# be told to ignore the lid (rotate-lid-settings sets that up), otherwise it
-# suspends on its own before this ever runs.
 
 OUTPUT=DSI-1
 

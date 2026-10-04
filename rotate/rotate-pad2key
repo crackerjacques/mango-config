@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-# RG Rotate: gamepad buttons -> keyboard keys (evdev/uinput, X11/Wayland-safe).
-#  - SELECT: held Alt, so SELECT + d-pad moves focus to the next window
-#    (Alt+arrows, focusdir); START + SELECT opens Lid Settings (bind.conf)
-#  - L2: held Super+Shift, so L2 + d-pad swaps the window with its neighbour
-#    (exchange_client)
+# RG Rotate: gamepad buttons -> keyboard keys 
 
 import time, select, evdev
 from evdev import ecodes as e, UInput
@@ -25,11 +21,9 @@ COMBO = {
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
     e.BTN_TL:     (e.KEY_LEFTMETA,  e.KEY_PAGEUP),
-    e.BTN_TR:     (e.KEY_LEFTMETA,  e.KEY_PAGEDOWN),
+    e.BTN_TR:     (e.KEY_F14,),
 }
-# Held for as long as the button is: modifiers pressed in this order and
-# released in reverse, so Super is never the last key down and letting go of
-# the button is not taken for a bare Super tap (rofi).
+
 HOLD = {
     e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFTSHIFT),
 }
@@ -68,10 +62,6 @@ for _seq in list(COMBO.values()) + list(HOLD.values()):
 
 ui = UInput({e.EV_KEY: sorted(_keys)}, name="rotate-pad2key")
 
-# Keys this process is currently holding down, per source. A device can vanish
-# mid-press (rfkill, driver reload, an unplugged pad), and without this the
-# virtual keyboard keeps the key down for good - a stuck KEY_LEFTMETA leaves the
-# desktop unusable on a board with no keyboard to clear it with.
 held = {}
 
 def drop(fd):

@@ -1,8 +1,5 @@
 #!/bin/sh
-# RG Rotate: (re)start mangobar. Uses what rotate-bar-settings wrote to
-# ~/.config/rotate-bar, or the stock config in the mango config until then.
-#   rotate-bar           restart it
-#   rotate-bar --toggle  stop it if it runs, start it if not (Super+h)
+# RG Rotate: (re)start mangobar. 
 u=${XDG_CONFIG_HOME:-$HOME/.config}/rotate-bar
 m=$HOME/.config/mango/mangobar
 cfg=$m/config.jsonc

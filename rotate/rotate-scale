@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# RG Rotate: desktop scale. Below 1 the 720x720 panel gets more room
-# (0.75 gives 960x960) at the cost of smaller text.
+# RG Rotate: desktop scale.
 
 import os
 import subprocess
