@@ -5,7 +5,7 @@ set -eu
 
 SRC=$HOME/src/mango-build
 CONFIG_REPO=https://github.com/crackerjacques/mango-config.git
-CONFIG_BRANCH=anbernic-vita-pro
+CONFIG_BRANCH=anbernic-rg-vita-pro
 RAW=https://raw.githubusercontent.com/crackerjacques/mango-config/$CONFIG_BRANCH
 JOBS=$(nproc)
 

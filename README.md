@@ -12,7 +12,7 @@ Other handhelds have their own branch: `anbernic-rg-ds`, `anbernic-rg-rotate`.
 Run this as your normal user (not root) on the device:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/crackerjacques/mango-config/anbernic-vita-pro/mangowm_setup.sh
+curl -LO https://raw.githubusercontent.com/crackerjacques/mango-config/anbernic-rg-vita-pro/mangowm_setup.sh
 bash mangowm_setup.sh
 ```
 
