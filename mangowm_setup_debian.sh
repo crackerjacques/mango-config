@@ -64,7 +64,7 @@ step_deps() {
 		libcairo2-dev libpulse-dev libsystemd-dev libgdk-pixbuf-2.0-dev systemd-dev \
 		libasound2-dev libpam0g-dev pavucontrol pulseaudio-utils\
 		rofi xdg-desktop-portal-wlr swaybg cliphist wl-clipboard wlsunset \
-		xfce-polkit sway-notification-center pipewire-audio pamixer swayidle brightnessctl swayosd rfkill libnotify-bin \
+		xfce-polkit polkitd sway-notification-center pipewire-audio pamixer swayidle brightnessctl swayosd rfkill libnotify-bin \
 		wlr-randr grim slurp sox wvkbd fonts-font-awesome fonts-hack \
 		python3-gi gir1.2-gtk-4.0 python3-evdev thunar breeze-icon-theme
 }

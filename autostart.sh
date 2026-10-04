@@ -42,7 +42,10 @@ blueman-applet >/dev/null 2>&1 &
 nm-applet >/dev/null 2>&1 &
 
 # Permission authentication
-/usr/lib/xfce-polkit/xfce-polkit >/dev/null 2>&1 &
+for agent in /usr/lib/xfce-polkit/xfce-polkit /usr/libexec/xfce-polkit \
+	/usr/libexec/xfce-polkit/xfce-polkit; do
+	[ -f "$agent" ] && [ -x "$agent" ] && { "$agent" >/dev/null 2>&1 & break; }
+done
 
 # inhibit by audio
 sway-audio-idle-inhibit >/dev/null 2>&1 &
