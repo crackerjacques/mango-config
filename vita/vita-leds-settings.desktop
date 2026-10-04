@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Stick Lights
+Comment=Colours and battery status on the stick rings
+Exec=vita-leds-settings
+Icon=vita-leds-settings
+Categories=Settings;

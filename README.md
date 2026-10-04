@@ -78,6 +78,8 @@ The analog sticks are left alone and always work as a gamepad.
 | `vita-bar`, `vita-bar-sensor` | Start mangobar with those settings; sensor readings for it |
 | `vita-scale` | Desktop scale: 2.0 / 1.75 bigger, 1.5 default, 1.25 / 1.0 more room |
 | `vita-rofi` | Opens the app menu on the focused screen, closing one left open |
+| `vita-leds` | Stick rings as a status light: charging, plugged in, low battery (service) |
+| `vita-leds-settings` | Stick Lights: battery status, fixed colours, the controller's effects, or off |
 | `install.sh` | Puts the above in `/usr/bin` and leaves a short power-key press to mango |
 
 ## Display

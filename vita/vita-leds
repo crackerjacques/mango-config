@@ -1,0 +1,225 @@
+#!/usr/bin/env python3
+# RG Vita Pro: the RGB rings around the sticks as a status light.
+#
+# Runs as root from vita-leds.service and works at the login screen too.
+# Settings are read from /etc/vita-leds.json, which vita-leds-settings writes
+# (install.sh makes it writable by the user). Changes show within a second.
+#
+# The rings come from the spi-mcu-joypad driver as two multicolor LEDs,
+# <spi dev>::joystick-left and ::joystick-right. The MCU takes one brightness
+# for both, the left ring's, so a single ring is turned off by its colour
+# (0 0 0), never by its brightness. led_mode / led_speed / led_switch on the
+# SPI device pick the MCU's own animations; 1 is plain colour.
+import glob
+import json
+import os
+import signal
+import sys
+import time
+
+CONF = "/etc/vita-leds.json"
+TICK = 0.5          # blink half-period, and how often settings are checked
+BATTERY_EVERY = 10  # ticks between battery reads (the fuel gauge is slow)
+
+DEFAULTS = {
+    "mode": "status",       # status, color, effect, off
+    "level": 96,            # brightness for both rings, 1-255
+    "rings": "left",        # status on: left, right, both
+    "charging": "#ff6000",
+    "full": "#00ff40",
+    "battery": "#000000",   # on battery above "low_at": dark
+    "low": "#ff0000",
+    "low_at": 15,           # % at or below which "low" shows
+    "blink_at": 5,          # % at or below which "low" blinks
+    "left": "#ffffff",      # mode color
+    "right": "#ffffff",
+    "effect": 2,            # mode effect: the MCU's led_mode
+    "speed": 1,
+    "screen_off": "dim",    # while the panel is off: off, dim, keep
+}
+
+
+def rgb(hexcolor):
+    h = hexcolor.lstrip("#")
+    try:
+        return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    except ValueError:
+        return (0, 0, 0)
+
+
+def write(path, value):
+    try:
+        with open(path, "w") as f:
+            f.write(f"{value}\n")
+    except OSError:
+        pass
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+class Settings:
+    def __init__(self):
+        self.mtime = None
+        self.s = dict(DEFAULTS)
+
+    def poll(self):
+        """Reload when the file changed. A half-written file keeps the old."""
+        try:
+            mtime = os.stat(CONF).st_mtime
+        except OSError:
+            mtime = None
+        if mtime == self.mtime:
+            return
+        self.mtime = mtime
+        try:
+            with open(CONF) as f:
+                s = {**DEFAULTS, **json.load(f)}
+        except (OSError, ValueError, TypeError):
+            return
+        # the file is the user's: keep each value the type the loop expects
+        for key, default in DEFAULTS.items():
+            try:
+                s[key] = type(default)(s[key])
+            except (TypeError, ValueError):
+                s[key] = default
+        self.s = s
+
+    def __getitem__(self, key):
+        return self.s[key]
+
+
+def battery():
+    """(state, percent): state is charging, full or battery; None if none."""
+    online = False
+    for p in glob.glob("/sys/class/power_supply/*"):
+        if read(f"{p}/type") != "Battery" and read(f"{p}/online") == "1":
+            online = True
+    for p in sorted(glob.glob("/sys/class/power_supply/*")):
+        if read(f"{p}/type") != "Battery":
+            continue
+        status = read(f"{p}/status")
+        try:
+            pct = int(read(f"{p}/capacity"))
+        except ValueError:
+            continue
+        if status == "Charging":
+            return "charging", pct
+        if status == "Full" or (online and pct >= 100):
+            return "full", pct
+        if online:  # plugged in but not charging (held back, or topped off)
+            return "full", pct
+        return "battery", pct
+    return None
+
+
+def screen_off():
+    # vita-screenoff keeps this flag while the panel is blanked
+    if glob.glob("/run/user/*/vita-screenoff"):
+        return True
+    for bl in glob.glob("/sys/class/backlight/*"):
+        if read(f"{bl}/bl_power") not in ("", "0"):
+            return True
+    return False
+
+
+class Rings:
+    def __init__(self):
+        self.left = self.right = self.dev = None
+        self.last = None
+
+    def find(self):
+        if self.left and os.path.exists(self.left):
+            return True
+        left = glob.glob("/sys/class/leds/*::joystick-left")
+        right = glob.glob("/sys/class/leds/*::joystick-right")
+        if not left or not right:
+            return False
+        self.left, self.right = left[0], right[0]
+        self.dev = os.path.realpath(f"{self.left}/device")
+        self.last = None
+        return True
+
+    def show(self, mode, speed, level, lc, rc):
+        """Send only what changed; every write is an SPI message to the MCU."""
+        on = level > 0 and (lc != (0, 0, 0) or rc != (0, 0, 0) or mode != 1)
+        state = (on, mode, speed, level, lc, rc)
+        if state == self.last:
+            return
+        self.last = state
+        if not on:
+            write(f"{self.dev}/led_switch", 0)
+            return
+        write(f"{self.dev}/led_mode", mode)
+        write(f"{self.dev}/led_speed", speed)
+        write(f"{self.right}/multi_intensity", "%d %d %d" % rc)
+        write(f"{self.left}/multi_intensity", "%d %d %d" % lc)
+        write(f"{self.right}/brightness", level)
+        write(f"{self.left}/brightness", level)
+        write(f"{self.dev}/led_switch", 1)
+
+    def off(self):
+        if self.find():
+            self.show(1, 0, 0, (0, 0, 0), (0, 0, 0))
+
+
+def main():
+    settings = Settings()
+    rings = Rings()
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+
+    bat = None
+    tick = 0
+    try:
+        while True:
+            if not rings.find():
+                time.sleep(2)
+                continue
+            settings.poll()
+            if tick % BATTERY_EVERY == 0:
+                bat = battery()
+            tick += 1
+            blink_on = tick % 2 == 0
+
+            level = max(1, min(255, int(settings["level"])))
+            if screen_off():
+                if settings["screen_off"] == "off":
+                    level = 0
+                elif settings["screen_off"] == "dim":
+                    level = max(1, level // 8)
+
+            mode = settings["mode"]
+            if mode == "off":
+                rings.show(1, 0, 0, (0, 0, 0), (0, 0, 0))
+            elif mode == "color":
+                rings.show(1, 0, level, rgb(settings["left"]), rgb(settings["right"]))
+            elif mode == "effect":
+                rings.show(int(settings["effect"]), int(settings["speed"]), level,
+                           rgb(settings["left"]), rgb(settings["right"]))
+            else:
+                color = (0, 0, 0)
+                if bat:
+                    state, pct = bat
+                    if state != "battery":
+                        color = rgb(settings[state])
+                    elif pct <= int(settings["blink_at"]):
+                        color = rgb(settings["low"]) if blink_on else (0, 0, 0)
+                    elif pct <= int(settings["low_at"]):
+                        color = rgb(settings["low"])
+                    else:
+                        color = rgb(settings["battery"])
+                which = settings["rings"]
+                lc = color if which in ("left", "both") else (0, 0, 0)
+                rc = color if which in ("right", "both") else (0, 0, 0)
+                rings.show(1, 0, level, lc, rc)
+            time.sleep(TICK)
+    finally:
+        rings.off()
+
+
+main()

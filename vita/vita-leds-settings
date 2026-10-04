@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+# RG Vita Pro: settings for the stick rings (vita-leds). Every change is
+# written to /etc/vita-leds.json straight away and the rings follow within a
+# second, so there is no Apply. D-pad and A work everywhere; B (Esc) closes.
+import json
+import subprocess
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, Gtk
+
+CONF = "/etc/vita-leds.json"
+
+# Keep in step with DEFAULTS in vita-leds.
+DEFAULTS = {
+    "mode": "status", "level": 96, "rings": "left",
+    "charging": "#ff6000", "full": "#00ff40", "battery": "#000000", "low": "#ff0000",
+    "low_at": 15, "blink_at": 5,
+    "left": "#ffffff", "right": "#ffffff",
+    "effect": 2, "speed": 1,
+    "screen_off": "dim",
+}
+
+PALETTE = [
+    ("off", "#000000"), ("red", "#ff0000"), ("orange", "#ff6000"),
+    ("yellow", "#ffd000"), ("green", "#00ff40"), ("cyan", "#00e0ff"),
+    ("blue", "#0040ff"), ("purple", "#a000ff"), ("pink", "#ff40a0"),
+    ("white", "#ffffff"),
+]
+
+CSS = """
+window { background: #201b14; }
+label { color: #d1b88e; font-family: Hack; font-size: 16px; }
+label.head { color: #ac9259; font-weight: bold; margin-top: 8px; }
+label.dim { color: #888888; }
+button {
+    background: #2b241b; background-image: none; box-shadow: none; color: #d1b88e;
+    border: 3px solid #201b14; border-radius: 8px; padding: 4px 10px;
+}
+button label { color: #d1b88e; }
+button:checked { background: #ac9259; }
+button:checked label { color: #201b14; }
+button:focus { border-color: #d1b88e; }
+button.swatch { min-width: 30px; min-height: 30px; padding: 0; border-radius: 15px; }
+button.swatch:checked { border-color: #ffffff; }
+button.swatch:focus { border-color: #d1b88e; }
+scale trough { min-height: 10px; border-radius: 5px; background: #3a3125; }
+scale highlight { border-radius: 5px; background: #ac9259; }
+scale slider { min-width: 24px; min-height: 24px; border-radius: 12px; background: #d1b88e; }
+spinbutton { background: #2b241b; color: #d1b88e; border-radius: 8px; }
+""" + "".join(
+    f"button.sw-{name}, button.sw-{name}:checked {{ background: {color}; }}\n"
+    for name, color in PALETTE)
+
+
+def load_css():
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+        provider.load_from_string(CSS)
+    else:
+        provider.load_from_data(CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+
+def load():
+    try:
+        with open(CONF) as f:
+            return {**DEFAULTS, **json.load(f)}
+    except (OSError, ValueError):
+        return dict(DEFAULTS)
+
+
+def head(text):
+    label = Gtk.Label(label=text, xalign=0)
+    label.add_css_class("head")
+    return label
+
+
+class LedSettings(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Stick Lights")
+        self.set_default_size(620, 640)
+        self.s = load()
+        self.loading = False
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6,
+                      margin_top=12, margin_bottom=12, margin_start=16, margin_end=16)
+        scroll.set_child(box)
+        outer.append(scroll)
+        self.set_child(outer)
+
+        self.warn = Gtk.Label(xalign=0, wrap=True)
+        self.warn.add_css_class("dim")
+        box.append(self.warn)
+
+        # setters that put the current settings back on the widgets
+        self.setters = []
+
+        box.append(head("Show"))
+        box.append(self.choice("mode", [("status", "Battery"), ("color", "Colour"),
+                                        ("effect", "Effect"), ("off", "Off")]))
+
+        box.append(head("Brightness"))
+        level = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 1, 255, 1)
+        level.set_draw_value(False)
+        level.connect("value-changed", lambda w: self.set("level", int(w.get_value())))
+        self.setters.append(lambda: level.set_value(self.s["level"]))
+        box.append(level)
+
+        box.append(head("While the screen is off"))
+        box.append(self.choice("screen_off", [("off", "Dark"), ("dim", "Dim"),
+                                              ("keep", "Same")]))
+
+        # battery status
+        self.status_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.status_box.append(head("Rings"))
+        self.status_box.append(self.choice("rings", [("left", "Left"), ("right", "Right"),
+                                                     ("both", "Both")]))
+        for key, text in (("charging", "Charging"), ("full", "Plugged in, not charging"),
+                          ("low", f"Low battery (blinks at {self.s['blink_at']}%)"),
+                          ("battery", "On battery")):
+            self.status_box.append(head(text))
+            self.status_box.append(self.swatches(key))
+        box.append(self.status_box)
+
+        # colour and effect
+        self.color_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        for key, text in (("left", "Left ring"), ("right", "Right ring")):
+            self.color_box.append(head(text))
+            self.color_box.append(self.swatches(key))
+        box.append(self.color_box)
+
+        self.effect_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.effect_box.append(head("Effect (the controller's own animations)"))
+        row = Gtk.Box(spacing=12)
+        for key, text, top in (("effect", "Effect", 15), ("speed", "Speed", 15)):
+            row.append(Gtk.Label(label=text))
+            spin = Gtk.SpinButton.new_with_range(0, top, 1)
+            spin.connect("value-changed",
+                         lambda w, k=key: self.set(k, int(w.get_value())))
+            self.setters.append(lambda w=spin, k=key: w.set_value(self.s[k]))
+            row.append(spin)
+        self.effect_box.append(row)
+        box.append(self.effect_box)
+
+        bottom = Gtk.Box(spacing=8, margin_top=8, margin_bottom=12,
+                         margin_start=16, margin_end=16, halign=Gtk.Align.END)
+        defaults = Gtk.Button(label="Defaults")
+        defaults.connect("clicked", self.defaults)
+        close = Gtk.Button(label="Close")
+        close.connect("clicked", lambda _b: self.close())
+        bottom.append(defaults)
+        bottom.append(close)
+        outer.append(bottom)
+
+        self.refresh()
+        self.check()
+        self.present()
+
+    def choice(self, key, options):
+        """A row of linked toggle buttons, one per (value, label)."""
+        row = Gtk.Box(spacing=4)
+        buttons = {}
+        group = None
+        for value, text in options:
+            b = Gtk.ToggleButton(label=text)
+            if group:
+                b.set_group(group)
+            group = group or b
+            b.connect("toggled", lambda w, v=value: w.get_active() and self.set(key, v))
+            buttons[value] = b
+            row.append(b)
+        self.setters.append(
+            lambda: buttons.get(self.s[key], group).set_active(True))
+        return row
+
+    def swatches(self, key):
+        row = Gtk.Box(spacing=6)
+        buttons = {}
+        group = None
+        for name, color in PALETTE:
+            b = Gtk.ToggleButton(tooltip_text=name)
+            b.add_css_class("swatch")
+            b.add_css_class(f"sw-{name}")
+            if name == "off":
+                b.set_label("×")
+            if group:
+                b.set_group(group)
+            group = group or b
+            b.connect("toggled", lambda w, c=color: w.get_active() and self.set(key, c))
+            buttons[color] = b
+            row.append(b)
+
+        def put():
+            b = buttons.get(self.s[key].lower())
+            if b:
+                b.set_active(True)
+            else:  # a colour from the file that is not on the palette
+                for other in buttons.values():
+                    other.set_active(False)
+        self.setters.append(put)
+        return row
+
+    def refresh(self):
+        self.loading = True
+        for put in self.setters:
+            put()
+        self.loading = False
+        self.show_sections()
+
+    def show_sections(self):
+        mode = self.s["mode"]
+        self.status_box.set_visible(mode == "status")
+        self.color_box.set_visible(mode in ("color", "effect"))
+        self.effect_box.set_visible(mode == "effect")
+
+    def set(self, key, value):
+        if self.loading:
+            return
+        self.s[key] = value
+        if key == "mode":
+            self.show_sections()
+        self.save()
+
+    def save(self):
+        try:
+            with open(CONF, "w") as f:  # in place: /etc itself is not ours
+                json.dump(self.s, f, indent=2)
+        except OSError:
+            self.warn.set_text(f"Cannot write {CONF}. Run once:\n"
+                               "sudo sh ~/.config/mango/vita/install.sh")
+            self.warn.set_visible(True)
+
+    def check(self):
+        active = subprocess.run(["systemctl", "is-active", "-q", "vita-leds"]).returncode == 0
+        if not active:
+            self.warn.set_text("The vita-leds service is not running. Run once:\n"
+                               "sudo sh ~/.config/mango/vita/install.sh")
+        self.warn.set_visible(not active)
+
+    def defaults(self, _button):
+        self.s = dict(DEFAULTS)
+        self.refresh()
+        self.save()
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:  # launched again: close it
+        win.close()
+        return
+    load_css()
+    LedSettings(app)
+
+
+app = Gtk.Application(application_id="org.armbian.VitaLeds")
+app.connect("activate", on_activate)
+app.run(None)
