@@ -2,11 +2,13 @@
 # RG Rotate: choose what closing the lid does.
 
 import os
+import shutil
+import stat
 import subprocess
 
 import gi
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gdk, GLib, Gtk
+from gi.repository import Gdk, Gio, GLib, Gtk
 
 CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"),
                     "rotate-lid")
@@ -19,29 +21,26 @@ SETUP = ("mkdir -p /etc/systemd/logind.conf.d && "
 MODES = [("none", "Do nothing"), ("off", "Screen off"), ("sleep", "Sleep"),
          ("script", "Run script")]
 
-# "Run script": rotate-lid runs this with "fold" or "unfold". Any language
-# works as long as it is executable and starts with a #! line.
-SCRIPT = os.path.join(os.path.dirname(CONF), "rotate-lid.d", "lid")
-TEMPLATE = """#!/bin/sh
-# RG Rotate: run when the lid closes (fold) and opens (unfold), when Lid
-# Settings is on "Run script". Opening is up to this script as well, so
-# wake the screen in "unfold".
-#
-# Python works too: make the first line #!/usr/bin/env python3 and read
-# sys.argv[1]. Keep the file executable (chmod +x).
+# "Run script": rotate-lid runs the picked script with "fold" or "unfold";
+# anything executable with a #! line.
+SCRIPT_DIR = os.path.join(os.path.dirname(CONF), "rotate-lid.d")
+PICK = CONF + ".script"
+EXAMPLE = os.path.join(SCRIPT_DIR, "lid_example")
+EXAMPLE_SRC = "/usr/share/rotate-lid/lid_example"
 
-case "$1" in
-fold)
-	# a stand-by screen instead of a dark one, for example:
-	# foot --fullscreen -e tty-clock -c &
-	mmsg dispatch sleep_monitor,DSI-1
-	;;
-unfold)
-	# pkill -f tty-clock
-	mmsg dispatch wakeup_monitor,DSI-1
-	;;
-esac
-"""
+
+def script():
+    try:
+        with open(PICK) as f:
+            path = f.read().strip()
+    except OSError:
+        path = ""
+    return path or EXAMPLE
+
+
+def short(path):
+    return path.replace(os.path.expanduser("~"), "~", 1)
+
 
 CSS = """
 window { background: #201b14; }
@@ -110,14 +109,18 @@ class LidSettings(Gtk.ApplicationWindow):
 
         self.script_row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6,
                                   visible=cur == "script")
-        path = Gtk.Label(label=SCRIPT.replace(os.path.expanduser("~"), "~", 1),
-                         xalign=0, wrap=True)
-        path.add_css_class("dim")
-        path.add_css_class("small")
-        self.script_row.append(path)
-        edit = Gtk.Button(label="Edit script")
+        self.path = Gtk.Label(label=short(script()), xalign=0, wrap=True)
+        self.path.add_css_class("dim")
+        self.path.add_css_class("small")
+        self.script_row.append(self.path)
+        row = Gtk.Box(spacing=12, homogeneous=True)
+        choose = Gtk.Button(label="Choose…")
+        choose.connect("clicked", self.on_choose)
+        edit = Gtk.Button(label="Edit")
         edit.connect("clicked", self.on_edit)
-        self.script_row.append(edit)
+        row.append(choose)
+        row.append(edit)
+        self.script_row.append(row)
         box.append(self.script_row)
 
         self.status = Gtk.Label(xalign=0, wrap=True)
@@ -139,11 +142,13 @@ class LidSettings(Gtk.ApplicationWindow):
         with open(CONF, "w") as f:
             f.write(mode + "\n")
         self.script_row.set_visible(mode == "script")
-        if mode == "script" and not os.path.exists(SCRIPT):
-            os.makedirs(os.path.dirname(SCRIPT), exist_ok=True)
-            with open(SCRIPT, "w") as f:
-                f.write(TEMPLATE)
-            os.chmod(SCRIPT, 0o755)
+        if mode == "script" and script() == EXAMPLE and not os.path.exists(EXAMPLE):
+            os.makedirs(SCRIPT_DIR, exist_ok=True)
+            try:
+                shutil.copy(EXAMPLE_SRC, EXAMPLE)
+                os.chmod(EXAMPLE, 0o755)
+            except OSError:
+                pass
         self.label = dict(MODES)[mode]
         if os.path.exists(DROPIN):
             self.report()
@@ -152,8 +157,32 @@ class LidSettings(Gtk.ApplicationWindow):
         p = subprocess.Popen(["foot", "-e", "sudo", "sh", "-c", SETUP])
         GLib.child_watch_add(GLib.PRIORITY_DEFAULT, p.pid, lambda *a: self.report())
 
+    def on_choose(self, _button):
+        os.makedirs(SCRIPT_DIR, exist_ok=True)
+        dialog = Gtk.FileDialog(title="Lid script")
+        dialog.set_initial_folder(Gio.File.new_for_path(SCRIPT_DIR))
+        dialog.open(self, None, self.chosen)
+
+    def chosen(self, dialog, result):
+        try:
+            path = dialog.open_finish(result).get_path()
+        except GLib.Error:  # cancelled
+            return
+        with open(PICK, "w") as f:
+            f.write(path + "\n")
+        self.path.set_text(short(path))
+        note = ""
+        if not os.access(path, os.X_OK):
+            try:
+                os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
+                note = " (made executable)"
+            except OSError:
+                self.say(f"Picked {short(path)}, but it is not executable", "err")
+                return
+        self.say(f"Script: {short(path)}{note}")
+
     def on_edit(self, _button):
-        subprocess.Popen(["foot", "-e", "sh", "-c", '${EDITOR:-nano} "$1"', "sh", SCRIPT],
+        subprocess.Popen(["foot", "-e", "sh", "-c", '${EDITOR:-nano} "$1"', "sh", script()],
                          start_new_session=True)
 
     def report(self):

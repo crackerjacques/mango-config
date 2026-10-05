@@ -12,8 +12,8 @@ install -m 644 rotate-lid-settings.desktop rotate-wallpaper.desktop \
 install -m 644 icons/*.svg /usr/share/icons/hicolor/scalable/apps/
 gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true
 
-# mango renamed monitorrule to monitor_rule (October 2026): fix a scale saved
-# by an older rotate-scale, or mango stops at an unknown keyword
+install -D -m 755 rotate-lid-example /usr/share/rotate-lid/lid_example
+
 f=$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)/.config/rotate-scale/monitor.conf
 [ -f "$f" ] && sed -i 's/^monitorrule=/monitor_rule=/' "$f"
 

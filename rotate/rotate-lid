@@ -3,7 +3,13 @@
 
 OUTPUT=DSI-1
 CONF=${XDG_CONFIG_HOME:-$HOME/.config}
-SCRIPT=$CONF/rotate-lid.d/lid
+EXAMPLE=$CONF/rotate-lid.d/lid_example
+# the script picked in Lid Settings, or the example
+SCRIPT=$(cat "$CONF/rotate-lid.script" 2>/dev/null)
+SCRIPT=${SCRIPT:-$EXAMPLE}
+if [ "$SCRIPT" = "$EXAMPLE" ] && [ ! -e "$EXAMPLE" ]; then
+	install -D -m 755 /usr/share/rotate-lid/lid_example "$EXAMPLE" 2>/dev/null
+fi
 
 mode=$(cat "$CONF/rotate-lid" 2>/dev/null)
 
