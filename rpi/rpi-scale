@@ -147,7 +147,7 @@ class Scale(Gtk.ApplicationWindow):
         for name, (rot, sc) in self.picks.items():
             rr = ROTATIONS[rot.get_selected()][1]
             scale = SCALES[sc.get_selected()]
-            lines.append(f"monitorrule=name:^{name}$,rr:{rr},scale:{scale:.6f}")
+            lines.append(f"monitor_rule=name:^{name}$,rr:{rr},scale:{scale:.6f}")
         return "\n".join(lines) + "\n"
 
     def on_apply(self, _button):
