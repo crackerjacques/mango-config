@@ -3,9 +3,6 @@
 
 set -eu
 
-# Build sources go in the mango-config clone this script is run from, so
-# deleting that clone takes them too. Run on its own (curl) or from
-# ~/.config/mango, they go to ~/.cache instead.
 HERE=$(cd "$(dirname "$0")" && pwd)
 if [ -e "$HERE/.git" ] && [ -f "$HERE/bind.conf" ] && [ "$HERE" != "$HOME/.config/mango" ]; then
 	SRC=$HERE/src
@@ -26,7 +23,6 @@ fetch() {
 		git clone -q "$1" "$SRC/$2"
 	fi
 	[ -n "${3:-}" ] && git -C "$SRC/$2" checkout -q "$3"
-	# a tag leaves HEAD detached and needs no pull; a branch does
 	if git -C "$SRC/$2" symbolic-ref -q HEAD >/dev/null; then
 		git -C "$SRC/$2" pull -q --ff-only
 	fi
@@ -81,14 +77,10 @@ step_mango() {
 	# drop the patch applied by an earlier run so the pull can fast-forward
 	[ -d "$SRC/mango/.git" ] && git -C "$SRC/mango" reset -q --hard
 	fetch https://github.com/mangowm/mango.git mango
-	# keys fcitx5 hands back from its keyboard grab must not hit the
-	# keybindings a second time (opened rofi on every START chord)
 	curl -fsSL -o "$SRC/mango-im-replay-no-rebind.patch" \
 		"$RAW/patches/mango-im-replay-no-rebind.patch"
 	git -C "$SRC/mango" apply "$SRC/mango-im-replay-no-rebind.patch"
 	build mango
-	# the session file lands in /usr/local/share; make sure login screens that
-	# only look in /usr/share see it too
 	sudo mkdir -p /usr/share/wayland-sessions
 	sudo ln -sf /usr/local/share/wayland-sessions/mango.desktop /usr/share/wayland-sessions/
 }
@@ -174,9 +166,6 @@ step_ime() {
 	say "input method: fcitx5 + $IME"
 	sudo apt-get install -y fcitx5 fcitx5-config-qt fonts-noto-cjk "$IME_PKG"
 
-	# fcitx5 only offers what is in its input method group, and its settings
-	# window does not fit these screens - so write the group here. fcitx5
-	# rewrites this file when it exits, so make sure it is not running.
 	fcitx5-remote -e 2>/dev/null || true
 	for _ in 1 2 3 4 5 6 7 8 9 10; do
 		pgrep -x fcitx5 >/dev/null || break
@@ -229,8 +218,6 @@ CONF
 	echo "/etc/sddm.conf.d/autologin.conf (delete it to get the login screen back)."
 }
 
-# Offered at the end. Kept, a re-run of one step only fetches what changed,
-# and "sudo ninja -C <dir>/build uninstall" can take a piece out again.
 cleanup() {
 	[ -d "$SRC" ] || return 0
 	echo
@@ -239,7 +226,6 @@ cleanup() {
 	read -r -p "Delete them? (N/y) " answer </dev/tty
 	case "$answer" in
 		[yY]*)
-			# "sudo ninja install" leaves root-owned files in the build dirs
 			rm -rf "$SRC" 2>/dev/null || sudo rm -rf "$SRC"
 			echo "deleted" ;;
 		*) echo "kept" ;;
