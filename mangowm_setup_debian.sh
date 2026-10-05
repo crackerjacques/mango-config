@@ -114,7 +114,7 @@ step_foot() {
 
 step_extras() {
 	say "mangobar, sway-audio-idle-inhibit, swaylock-effects"
-	fetch https://github.com/crackerjacques/mangobar.git mangobar anbernic-rg-rotate
+	fetch https://github.com/crackerjacques/mangobar.git mangobar main
 	build mangobar
 	fetch https://github.com/ErikReider/SwayAudioIdleInhibit.git SwayAudioIdleInhibit
 	build SwayAudioIdleInhibit
