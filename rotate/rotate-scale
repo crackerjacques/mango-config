@@ -35,9 +35,9 @@ def current():
     try:
         with open(RULES) as f:
             for line in f:
-                if not line.startswith("monitorrule="):
+                if not line.startswith(("monitor_rule=", "monitorrule=")):
                     continue
-                fields = dict(p.split(":", 1) for p in line.strip()[12:].split(",") if ":" in p)
+                fields = dict(p.split(":", 1) for p in line.strip().split("=", 1)[1].split(",") if ":" in p)
                 for key, _, output in SCREENS:
                     if fields.get("name") == f"^{output}$":
                         found[key] = float(fields.get("scale", 1))
@@ -49,7 +49,7 @@ def current():
 def rules_for(scales):
     lines = ["# written by rotate-scale"]
     for key, _, output in SCREENS:
-        lines.append(f"monitorrule=name:^{output}$,width:{WIDTH},height:{HEIGHT},"
+        lines.append(f"monitor_rule=name:^{output}$,width:{WIDTH},height:{HEIGHT},"
                      f"x:0,y:0,scale:{scales[key]:.6f}")
     return "\n".join(lines) + "\n"
 
