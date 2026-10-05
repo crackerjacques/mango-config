@@ -12,6 +12,11 @@ install -m 644 vita-wallpaper.desktop vita-cheatsheet.desktop vita-brightness.de
 install -m 644 icons/*.svg /usr/share/icons/hicolor/scalable/apps/
 gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true
 
+# mango renamed monitorrule to monitor_rule (October 2026): fix a scale saved
+# by an older vita-scale, or mango stops at an unknown keyword
+f=$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)/.config/vita-scale/monitor.conf
+[ -f "$f" ] && sed -i 's/^monitorrule=/monitor_rule=/' "$f"
+
 # a short buzz when a charger is plugged in
 install -m 644 99-vita-rumble.rules /etc/udev/rules.d/
 udevadm control --reload
