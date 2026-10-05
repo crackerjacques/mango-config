@@ -40,18 +40,18 @@ def short(path):
     return path.replace(os.path.expanduser("~"), "~", 1)
 
 CSS = """
-window { background: #201b14; }
-label { color: #d1b88e; font-family: Hack; font-size: 18px; }
-label.dim { color: #888888; }
-label.err { color: #ef2929; }
-label.small { font-size: 13px; }
-button {
+window.lid { background: #201b14; }
+window.lid label { color: #d1b88e; font-family: Hack; font-size: 28px; }
+window.lid label.dim { color: #888888; }
+window.lid label.err { color: #ef2929; }
+window.lid label.small { font-size: 16px; }
+window.lid button {
     background: #201b14; background-image: none; box-shadow: none;
-    border: 3px solid #201b14; border-radius: 8px; padding: 8px;
+    border: 4px solid #201b14; border-radius: 10px; padding: 16px;
 }
-button:checked { background: #ac9259; }
-button:checked label { color: #201b14; }
-button:focus { border-color: #d1b88e; }
+window.lid button:checked { background: #ac9259; }
+window.lid button:checked label { color: #201b14; }
+window.lid button:focus { border-color: #d1b88e; }
 """
 
 def current():
@@ -75,13 +75,14 @@ def load_css():
 class LidSettings(Gtk.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app, title="Lid Settings")
+        self.add_css_class("lid")
 
         keys = Gtk.EventControllerKey()
         keys.connect("key-pressed", self.on_key)
         self.add_controller(keys)
 
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6,
-                      margin_top=14, margin_bottom=14, margin_start=16, margin_end=16)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
+                      margin_top=24, margin_bottom=24, margin_start=24, margin_end=24)
         self.set_child(box)
 
         head = Gtk.Label(label="When the lid closes", xalign=0)
@@ -108,7 +109,7 @@ class LidSettings(Gtk.ApplicationWindow):
         self.path.add_css_class("dim")
         self.path.add_css_class("small")
         self.script_row.append(self.path)
-        row = Gtk.Box(spacing=8, homogeneous=True)
+        row = Gtk.Box(spacing=12, homogeneous=True)
         choose = Gtk.Button(label="Choose…")
         choose.connect("clicked", self.on_choose)
         edit = Gtk.Button(label="Edit")
