@@ -16,13 +16,39 @@ SETUP = ("mkdir -p /etc/systemd/logind.conf.d && "
          "HandleLidSwitchDocked=ignore\\n' >" + DROPIN + " && "
          "systemctl reload systemd-logind")
 
-MODES = [("none", "Do nothing"), ("off", "Screen off"), ("sleep", "Sleep")]
+MODES = [("none", "Do nothing"), ("off", "Screen off"), ("sleep", "Sleep"),
+         ("script", "Run script")]
+
+# "Run script": rotate-lid runs this with "fold" or "unfold". Any language
+# works as long as it is executable and starts with a #! line.
+SCRIPT = os.path.join(os.path.dirname(CONF), "rotate-lid.d", "lid")
+TEMPLATE = """#!/bin/sh
+# RG Rotate: run when the lid closes (fold) and opens (unfold), when Lid
+# Settings is on "Run script". Opening is up to this script as well, so
+# wake the screen in "unfold".
+#
+# Python works too: make the first line #!/usr/bin/env python3 and read
+# sys.argv[1]. Keep the file executable (chmod +x).
+
+case "$1" in
+fold)
+	# a stand-by screen instead of a dark one, for example:
+	# foot --fullscreen -e tty-clock -c &
+	mmsg dispatch sleep_monitor,DSI-1
+	;;
+unfold)
+	# pkill -f tty-clock
+	mmsg dispatch wakeup_monitor,DSI-1
+	;;
+esac
+"""
 
 CSS = """
 window { background: #201b14; }
 label { color: #d1b88e; font-family: Hack; font-size: 28px; }
 label.dim { color: #888888; }
 label.err { color: #ef2929; }
+label.small { font-size: 16px; }
 button {
     background: #201b14; background-image: none; box-shadow: none;
     border: 4px solid #201b14; border-radius: 10px; padding: 16px;
@@ -82,6 +108,18 @@ class LidSettings(Gtk.ApplicationWindow):
             if mode == cur:
                 focus = b
 
+        self.script_row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6,
+                                  visible=cur == "script")
+        path = Gtk.Label(label=SCRIPT.replace(os.path.expanduser("~"), "~", 1),
+                         xalign=0, wrap=True)
+        path.add_css_class("dim")
+        path.add_css_class("small")
+        self.script_row.append(path)
+        edit = Gtk.Button(label="Edit script")
+        edit.connect("clicked", self.on_edit)
+        self.script_row.append(edit)
+        box.append(self.script_row)
+
         self.status = Gtk.Label(xalign=0, wrap=True)
         box.append(self.status)
 
@@ -100,15 +138,23 @@ class LidSettings(Gtk.ApplicationWindow):
         os.makedirs(os.path.dirname(CONF), exist_ok=True)
         with open(CONF, "w") as f:
             f.write(mode + "\n")
+        self.script_row.set_visible(mode == "script")
+        if mode == "script" and not os.path.exists(SCRIPT):
+            os.makedirs(os.path.dirname(SCRIPT), exist_ok=True)
+            with open(SCRIPT, "w") as f:
+                f.write(TEMPLATE)
+            os.chmod(SCRIPT, 0o755)
         self.label = dict(MODES)[mode]
         if os.path.exists(DROPIN):
             self.report()
             return
-        # Needs root once; sudo in a terminal so the password can be typed on
-        # wvkbd. Watched, not waited on, so the window keeps redrawing.
         self.say(f"Saved: {self.label}\nSetting up logind…")
         p = subprocess.Popen(["foot", "-e", "sudo", "sh", "-c", SETUP])
         GLib.child_watch_add(GLib.PRIORITY_DEFAULT, p.pid, lambda *a: self.report())
+
+    def on_edit(self, _button):
+        subprocess.Popen(["foot", "-e", "sh", "-c", '${EDITOR:-nano} "$1"', "sh", SCRIPT],
+                         start_new_session=True)
 
     def report(self):
         if os.path.exists(DROPIN):

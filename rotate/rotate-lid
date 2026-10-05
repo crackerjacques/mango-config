@@ -2,8 +2,19 @@
 # RG Rotate: lid switch handler, run by the switchbind lines in bind.conf.
 
 OUTPUT=DSI-1
+CONF=${XDG_CONFIG_HOME:-$HOME/.config}
+SCRIPT=$CONF/rotate-lid.d/lid
 
-mode=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/rotate-lid" 2>/dev/null)
+mode=$(cat "$CONF/rotate-lid" 2>/dev/null)
+
+if [ "$mode" = script ]; then
+	if [ -x "$SCRIPT" ]; then
+		exec "$SCRIPT" "$1"
+	fi
+	notify-send -a Lid "Lid script missing or not executable: $SCRIPT" 2>/dev/null
+	mmsg dispatch "wakeup_monitor,$OUTPUT"
+	exit 1
+fi
 
 case "$1:${mode:-none}" in
 	fold:off)	mmsg dispatch "sleep_monitor,$OUTPUT" ;;
