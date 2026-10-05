@@ -28,7 +28,6 @@ PICK = CONF + ".script"
 EXAMPLE = os.path.join(SCRIPT_DIR, "lid_example")
 EXAMPLE_SRC = "/usr/share/rotate-lid/lid_example"
 
-
 def script():
     try:
         with open(PICK) as f:
@@ -37,10 +36,8 @@ def script():
         path = ""
     return path or EXAMPLE
 
-
 def short(path):
     return path.replace(os.path.expanduser("~"), "~", 1)
-
 
 CSS = """
 window { background: #201b14; }
@@ -56,7 +53,6 @@ button:checked { background: #ac9259; }
 button:checked label { color: #201b14; }
 button:focus { border-color: #d1b88e; }
 """
-
 
 def current():
     try:
@@ -75,7 +71,6 @@ def load_css():
         provider.load_from_data(CSS, -1)
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
                                               Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-
 
 class LidSettings(Gtk.ApplicationWindow):
     def __init__(self, app):
@@ -201,7 +196,6 @@ class LidSettings(Gtk.ApplicationWindow):
 def on_activate(app):
     load_css()
     LidSettings(app)
-
 
 app = Gtk.Application(application_id="org.armbian.RotateLidSettings")
 app.connect("activate", on_activate)
