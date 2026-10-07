@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+# RG DS: the sticks as a mouse. 
+
+import math
+import select
+import time
+
+import evdev
+from evdev import ecodes as e, UInput
+
+NAME = "rgds-stick"
+DEADZONE = 0.12
+SPEED = 1200
+SCROLL = 25
+TICK = 0.01
+CLICK = {e.BTN_THUMBL: e.BTN_LEFT, e.BTN_THUMBR: e.BTN_RIGHT}
+AXES = (e.ABS_X, e.ABS_Y, e.ABS_RX, e.ABS_RY)
+
+
+def find():
+    """The stick device (all four axes, no buttons, so not a USB pad) and
+    the one carrying the click buttons."""
+    stick = buttons = None
+    for path in evdev.list_devices():
+        try:
+            d = evdev.InputDevice(path)
+        except OSError:
+            continue
+        caps = d.capabilities()
+        axes = {a[0] if isinstance(a, tuple) else a for a in caps.get(e.EV_ABS, [])}
+        keys = set(caps.get(e.EV_KEY, []))
+        if d.name != NAME and not stick and set(AXES) <= axes and not keys:
+            stick = d
+        elif d.name != NAME and not buttons and set(CLICK) & keys and not axes:
+            buttons = d
+        else:
+            d.close()
+    return stick, buttons
+
+
+def curve(x):
+    """Dead zone, then squared so small tilts are fine-grained."""
+    a = abs(x)
+    if a < DEADZONE:
+        return 0.0
+    t = min(1.0, (a - DEADZONE) / (1 - DEADZONE))
+    return math.copysign(t * t, x)
+
+
+ui = UInput({e.EV_REL: [e.REL_X, e.REL_Y, e.REL_WHEEL, e.REL_HWHEEL,
+                        e.REL_WHEEL_HI_RES, e.REL_HWHEEL_HI_RES],
+             e.EV_KEY: sorted(CLICK.values())}, name=NAME)
+
+stick = buttons = None
+centre, half = {}, {}
+pos = {a: 0.0 for a in AXES}     # -1 .. 1
+rest = {e.REL_X: 0.0, e.REL_Y: 0.0, e.REL_WHEEL_HI_RES: 0.0, e.REL_HWHEEL_HI_RES: 0.0}
+notch = {e.REL_WHEEL_HI_RES: 0, e.REL_HWHEEL_HI_RES: 0}
+last = time.monotonic()
+
+while True:
+    if not stick:
+        stick, buttons = find()
+        if not stick:
+            time.sleep(2)
+            continue
+        for a in AXES:
+            info = stick.absinfo(a)
+            centre[a] = (info.min + info.max) / 2
+            half[a] = (info.max - info.min) / 2 or 1
+            pos[a] = 0.0
+
+    moving = any(curve(pos[a]) for a in AXES)
+    fds = [d for d in (stick, buttons) if d]
+    r, _, _ = select.select(fds, [], [], TICK if moving else None)
+    try:
+        for d in r:
+            for ev in d.read():
+                if ev.type == e.EV_ABS and ev.code in pos:
+                    pos[ev.code] = max(-1.0, min(1.0, (ev.value - centre[ev.code]) / half[ev.code]))
+                elif ev.type == e.EV_KEY and ev.code in CLICK and ev.value in (0, 1):
+                    ui.write(e.EV_KEY, CLICK[ev.code], ev.value)
+                    ui.syn()
+    except OSError:
+        stick = buttons = None
+        continue
+
+    now = time.monotonic()
+    dt, last = min(now - last, 0.05), now
+    if not moving:
+        continue
+    rest[e.REL_X] += curve(pos[e.ABS_X]) * SPEED * dt
+    rest[e.REL_Y] += curve(pos[e.ABS_Y]) * SPEED * dt
+    rest[e.REL_WHEEL_HI_RES] -= curve(pos[e.ABS_RY]) * SCROLL * 120 * dt
+    rest[e.REL_HWHEEL_HI_RES] += curve(pos[e.ABS_RX]) * SCROLL * 120 * dt
+    sent = False
+    for code, value in rest.items():
+        step = int(value)
+        if not step:
+            continue
+        rest[code] -= step
+        ui.write(e.EV_REL, code, step)
+        sent = True
+        if code in notch:
+            notch[code] += step
+            whole = int(notch[code] / 120)
+            if whole:
+                notch[code] -= whole * 120
+                ui.write(e.EV_REL, e.REL_WHEEL if code == e.REL_WHEEL_HI_RES else e.REL_HWHEEL,
+                         whole)
+    if sent:
+        ui.syn()

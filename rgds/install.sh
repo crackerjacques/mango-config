@@ -4,7 +4,7 @@
 set -e
 cd "$(dirname "$0")"
 
-install -m 755 rgds-pad2key rgds-touch rgds-lid rgds-lid-settings rgds-logout rgds-screenoff rgds-cheatsheet rgds-wallpaper rgds-brightness rgds-bar rgds-bar-sensor rgds-bar-settings rgds-scale rgds-rofi rgds-wireless rgds-rumble /usr/bin/
+install -m 755 rgds-pad2key rgds-touch rgds-lid rgds-lid-settings rgds-logout rgds-screenoff rgds-cheatsheet rgds-wallpaper rgds-brightness rgds-bar rgds-bar-sensor rgds-bar-settings rgds-scale rgds-rofi rgds-wireless rgds-rumble rgds-stick /usr/bin/
 install -m 644 rgds-touch.service /etc/systemd/system/
 install -m 644 rgds-lid-settings.desktop rgds-cheatsheet.desktop \
 	rgds-wallpaper.desktop rgds-brightness.desktop \
@@ -13,8 +13,6 @@ install -m 644 49-rgds-touch.rules /etc/polkit-1/rules.d/
 install -m 644 icons/*.svg /usr/share/icons/hicolor/scalable/apps/
 gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true
 
-# mango renamed monitorrule to monitor_rule (October 2026): fix a scale saved
-# by an older rgds-scale, or mango stops at an unknown keyword
 f=$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)/.config/rgds-scale/monitor.conf
 [ -f "$f" ] && sed -i 's/^monitorrule=/monitor_rule=/' "$f"
 
@@ -33,3 +31,19 @@ systemctl reload systemd-logind
 systemctl daemon-reload
 systemctl disable --now rgds-touch
 systemctl restart rgds-pad2key
+
+# the sticks as a mouse.
+cat >/etc/systemd/system/rgds-stick.service <<'UNIT'
+[Unit]
+Description=RG DS sticks as a mouse
+
+[Service]
+ExecStart=/usr/bin/rgds-stick
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl enable rgds-stick
+systemctl restart rgds-stick

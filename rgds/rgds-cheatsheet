@@ -28,7 +28,9 @@ ROWS = [
     ("Y", "Backspace", None),
     ("HOME (gpio)", "Input method on / off", ["fcitx5-remote", "-t"]),
     ("D-pad", "Arrow keys", None),
-    ("HOME/Return", "Shift+Tab / Tab", None),
+    ("Left stick", "Mouse pointer", None),
+    ("Right stick", "Scroll", None),
+    ("HOME/Return", "Left / right click", None),
     ("POWER", "Power menu", ["rgds-logout"]),
     ("", "Brightness", ["rgds-brightness"]),
     ("", "Wireless on/off (Airplane mode)", ["rgds-wireless"]),
@@ -116,7 +118,7 @@ class CheatSheet(Gtk.ApplicationWindow):
 
 def on_activate(app):
     win = app.get_active_window()
-    if win:  # second launch (R2 again): close the open sheet
+    if win:
         win.close()
         return
     load_css()
