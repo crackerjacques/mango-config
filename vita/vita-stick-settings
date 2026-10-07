@@ -31,7 +31,6 @@ scale highlight { border-radius: 5px; background: #ac9259; }
 scale slider { min-width: 24px; min-height: 24px; border-radius: 12px; background: #d1b88e; }
 """
 
-
 def load_css():
     provider = Gtk.CssProvider()
     if hasattr(provider, "load_from_string"):
@@ -41,14 +40,12 @@ def load_css():
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
                                               Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-
 def load():
     try:
         with open(CONF) as f:
             return {**DEFAULTS, **json.load(f)}
     except (OSError, ValueError):
         return dict(DEFAULTS)
-
 
 def head(text):
     label = Gtk.Label(label=text, xalign=0)
@@ -182,7 +179,6 @@ class StickSettings(Gtk.ApplicationWindow):
             return True
         return False
 
-
 def on_activate(app):
     win = app.get_active_window()
     if win:
@@ -190,7 +186,6 @@ def on_activate(app):
         return
     load_css()
     StickSettings(app)
-
 
 app = Gtk.Application(application_id="org.armbian.VitaStickSettings")
 app.connect("activate", on_activate)

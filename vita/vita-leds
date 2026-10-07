@@ -29,14 +29,12 @@ DEFAULTS = {
     "screen_off": "dim",
 }
 
-
 def rgb(hexcolor):
     h = hexcolor.lstrip("#")
     try:
         return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
     except ValueError:
         return (0, 0, 0)
-
 
 def write(path, value):
     try:
@@ -45,14 +43,12 @@ def write(path, value):
     except OSError:
         pass
 
-
 def read(path):
     try:
         with open(path) as f:
             return f.read().strip()
     except OSError:
         return ""
-
 
 class Settings:
     def __init__(self):
@@ -83,7 +79,6 @@ class Settings:
     def __getitem__(self, key):
         return self.s[key]
 
-
 def battery():
     """(state, percent): state is charging, full or battery; None if none."""
     online = False
@@ -105,7 +100,6 @@ def battery():
         return "battery", pct
     return None
 
-
 def screen_off():
     if glob.glob("/run/user/*/vita-screenoff"):
         return True
@@ -113,7 +107,6 @@ def screen_off():
         if read(f"{bl}/bl_power") not in ("", "0"):
             return True
     return False
-
 
 class Rings:
     def __init__(self):
@@ -153,7 +146,6 @@ class Rings:
     def off(self):
         if self.find():
             self.show(1, 0, 0, (0, 0, 0), (0, 0, 0))
-
 
 def main():
     settings = Settings()
@@ -207,6 +199,5 @@ def main():
             time.sleep(TICK)
     finally:
         rings.off()
-
-
+        
 main()

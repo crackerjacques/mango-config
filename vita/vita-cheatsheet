@@ -32,6 +32,7 @@ ROWS = [
     ("Left stick", "Mouse pointer", None),
     ("Right stick", "Scroll", None),
     ("", "Stick mouse settings", ["vita-stick-settings"]),
+    ("", "Game mode (hold HOME 2 s to come back)", ["vita-gamemode"]),
     ("L3 / R3", "Left / right click", None),
     ("PLAY", "Play / pause", None),
     ("POWER", "Power menu", ["vita-logout"]),

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Game Mode
+Comment=Leave every button and stick to games; hold HOME 2 s to come back
+Exec=vita-gamemode
+Icon=vita-gamemode
+Categories=Settings;

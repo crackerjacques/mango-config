@@ -51,7 +51,6 @@ spinbutton { background: #2b241b; color: #d1b88e; border-radius: 8px; }
     f"button.sw-{name}, button.sw-{name}:checked {{ background: {color}; }}\n"
     for name, color in PALETTE)
 
-
 def load_css():
     provider = Gtk.CssProvider()
     if hasattr(provider, "load_from_string"):
@@ -61,7 +60,6 @@ def load_css():
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
                                               Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-
 def load():
     try:
         with open(CONF) as f:
@@ -69,12 +67,10 @@ def load():
     except (OSError, ValueError):
         return dict(DEFAULTS)
 
-
 def head(text):
     label = Gtk.Label(label=text, xalign=0)
     label.add_css_class("head")
     return label
-
 
 class LedSettings(Gtk.ApplicationWindow):
     def __init__(self, app):
@@ -263,7 +259,6 @@ def on_activate(app):
         return
     load_css()
     LedSettings(app)
-
 
 app = Gtk.Application(application_id="org.armbian.VitaLeds")
 app.connect("activate", on_activate)

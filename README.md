@@ -73,7 +73,8 @@ mmsg dispatch reload_config
 
 The sticks work as a mouse (`vita-stick`); Stick Mouse turns that off and swaps
 which stick points.
-"Toggle Pad-as-Keyboard" in the app menu turns the button remap off for games.
+Game Mode (app menu or cheat sheet) hands every button and stick to games;
+hold HOME (the window-switching one) for 2 seconds to come back.
 
 ## Helpers (`vita/`)
 
@@ -90,6 +91,7 @@ which stick points.
 | `vita-scale` | Desktop scale: 2.0 / 1.75 bigger, 1.5 default, 1.25 / 1.0 more room |
 | `vita-stick` | The sticks as a mouse: left moves the pointer, right scrolls, L3 / R3 click (service) |
 | `vita-stick-settings` | Stick Mouse: on / off, which stick points, speeds |
+| `vita-gamemode` | Game Mode: every button and stick to games; hold HOME (adc) 2 s to come back |
 | `vita-capture` | Screenshot, and screen recording with wf-recorder (sound: system, mic or off) |
 | `vita-rofi` | Opens the app menu on the focused screen, closing one left open |
 | `vita-wireless` | Wireless on/off (Airplane mode): Wi-Fi and Bluetooth off, or back as they were |

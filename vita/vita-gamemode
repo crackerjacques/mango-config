@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+# RG Vita Pro: game mode - every button and both sticks go to games as a plain gamepad. 
+
+#   vita-gamemode             this window
+#   vita-gamemode on | off
+import subprocess
+import sys
+
+GAME = "/run/vita-gamemode"
+
+CSS = """
+window { background: #201b14; }
+label { color: #d1b88e; font-family: Hack; font-size: 16px; }
+label.head { color: #ac9259; font-weight: bold; font-size: 20px; }
+label.dim { color: #888888; }
+button {
+    background: #2b241b; background-image: none; box-shadow: none; color: #d1b88e;
+    border: 3px solid #201b14; border-radius: 8px; padding: 8px 14px;
+}
+button label { color: #d1b88e; }
+button.go { background: #ac9259; }
+button.go label { color: #201b14; font-weight: bold; }
+button:focus { border-color: #d1b88e; }
+"""
+
+def is_on():
+    try:
+        with open(GAME) as f:
+            return f.read().strip() == "1"
+    except OSError:
+        return False
+
+def turn(on):
+    """False when vita-pad2key (the mango one) is not running to obey it."""
+    try:
+        with open(GAME, "w") as f:
+            f.write("1\n" if on else "0\n")
+    except OSError:
+        return False
+    msg = ("Game mode on: hold HOME for 2 seconds to get the desktop controls back"
+           if on else "Game mode off: the buttons and sticks drive the desktop again")
+    subprocess.run(["notify-send", "-a", "Game mode", "-t", "4000", msg])
+    return True
+
+if len(sys.argv) > 1:
+    if sys.argv[1] not in ("on", "off") or not turn(sys.argv[1] == "on"):
+        print("usage: vita-gamemode [on | off]  (needs vita-pad2key running)",
+              file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, Gtk
+
+class GameMode(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Game Mode")
+        self.set_default_size(480, -1)
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10,
+                      margin_top=16, margin_bottom=16, margin_start=18, margin_end=18)
+        self.set_child(box)
+
+        head = Gtk.Label(label="Game mode", xalign=0)
+        head.add_css_class("head")
+        box.append(head)
+        text = Gtk.Label(xalign=0, wrap=True, label=(
+            "Every button and both sticks go to games as a plain gamepad: no keys, "
+            "no mouse, no shortcuts.\n\n"
+            "To come back, hold HOME for 2 seconds."))
+        box.append(text)
+
+        self.status = Gtk.Label(xalign=0, wrap=True)
+        self.status.add_css_class("dim")
+        box.append(self.status)
+
+        row = Gtk.Box(spacing=8, halign=Gtk.Align.END, margin_top=6)
+        close = Gtk.Button(label="Close")
+        close.connect("clicked", lambda _b: self.close())
+        self.go = Gtk.Button(label="Start game mode")
+        self.go.add_css_class("go")
+        self.go.connect("clicked", self.on_go)
+        row.append(close)
+        row.append(self.go)
+        box.append(row)
+
+        if is_on():
+            self.status.set_text("Game mode is on now.")
+        self.present()
+        self.go.grab_focus()
+
+    def on_go(self, _button):
+        if turn(True):
+            self.close()
+        else:
+            self.status.set_text("vita-pad2key is not running, so nothing would bring the "
+                                 "controls back. Run once:\nsudo sh ~/.config/mango/vita/install.sh")
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:
+        win.present()
+        return
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):
+        provider.load_from_string(CSS)
+    else:
+        provider.load_from_data(CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    GameMode(app)
+
+app = Gtk.Application(application_id="org.armbian.VitaGameMode")
+app.connect("activate", on_activate)
+app.run(None)
