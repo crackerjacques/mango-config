@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+# RG Vita Pro: settings for the sticks as a mouse (vita-stick).
+import json
+import subprocess
+
+import gi
+gi.require_version("Gtk", "4.0")
+from gi.repository import Gdk, Gtk
+
+CONF = "/etc/vita-stick.json"
+
+# Keep in step with DEFAULTS in vita-stick.
+DEFAULTS = {"enabled": True, "swap": False, "speed": 1200, "scroll": 25,
+            "horizontal": True, "deadzone": 0.12}
+
+CSS = """
+window { background: #201b14; }
+label { color: #d1b88e; font-family: Hack; font-size: 16px; }
+label.head { color: #ac9259; font-weight: bold; margin-top: 8px; }
+label.dim { color: #888888; }
+button {
+    background: #2b241b; background-image: none; box-shadow: none; color: #d1b88e;
+    border: 3px solid #201b14; border-radius: 8px; padding: 4px 10px;
+}
+button label { color: #d1b88e; }
+button:checked { background: #ac9259; }
+button:checked label { color: #201b14; }
+button:focus { border-color: #d1b88e; }
+scale trough { min-height: 10px; border-radius: 5px; background: #3a3125; }
+scale highlight { border-radius: 5px; background: #ac9259; }
+scale slider { min-width: 24px; min-height: 24px; border-radius: 12px; background: #d1b88e; }
+"""
+
+
+def load_css():
+    provider = Gtk.CssProvider()
+    if hasattr(provider, "load_from_string"):
+        provider.load_from_string(CSS)
+    else:
+        provider.load_from_data(CSS, -1)
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
+                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+
+def load():
+    try:
+        with open(CONF) as f:
+            return {**DEFAULTS, **json.load(f)}
+    except (OSError, ValueError):
+        return dict(DEFAULTS)
+
+
+def head(text):
+    label = Gtk.Label(label=text, xalign=0)
+    label.add_css_class("head")
+    return label
+
+
+class StickSettings(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Stick Mouse")
+        self.set_default_size(520, -1)
+        self.s = load()
+        self.loading = False
+        self.setters = []
+
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True,
+                                    propagate_natural_height=True)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6,
+                      margin_top=12, margin_bottom=8, margin_start=16, margin_end=16)
+        scroll.set_child(box)
+        outer.append(scroll)
+        self.set_child(outer)
+
+        self.warn = Gtk.Label(xalign=0, wrap=True, visible=False)
+        self.warn.add_css_class("dim")
+        box.append(self.warn)
+
+        box.append(head("Sticks as a mouse"))
+        box.append(self.choice("enabled", [(True, "On"), (False, "Off")]))
+
+        box.append(head("Pointer stick"))
+        box.append(self.choice("swap", [(False, "Left"), (True, "Right")]))
+        note = Gtk.Label(label="The other stick scrolls. Pressing the pointer stick is a\n"
+                               "left click, pressing the other a right click.",
+                         xalign=0, wrap=True)
+        note.add_css_class("dim")
+        box.append(note)
+
+        box.append(head("Pointer speed"))
+        box.append(self.slider("speed", 300, 3000, 50))
+        box.append(head("Scroll speed"))
+        box.append(self.slider("scroll", 5, 60, 1))
+
+        box.append(head("Sideways scroll"))
+        box.append(self.choice("horizontal", [(True, "On"), (False, "Off (up and down only)")]))
+
+        bottom = Gtk.Box(spacing=8, margin_top=8, margin_bottom=12,
+                         margin_start=16, margin_end=16, halign=Gtk.Align.END)
+        defaults = Gtk.Button(label="Defaults")
+        defaults.connect("clicked", self.defaults)
+        close = Gtk.Button(label="Close")
+        close.connect("clicked", lambda _b: self.close())
+        bottom.append(defaults)
+        bottom.append(close)
+        outer.append(bottom)
+
+        self.refresh()
+        self.check()
+        self.present()
+
+    def choice(self, key, options):
+        """A row of linked toggle buttons, one per (value, label)."""
+        row = Gtk.Box(spacing=4)
+        buttons = []
+        group = None
+        for value, text in options:
+            b = Gtk.ToggleButton(label=text)
+            if group:
+                b.set_group(group)
+            group = group or b
+            b.connect("toggled", lambda w, v=value: w.get_active() and self.set(key, v))
+            buttons.append((value, b))
+            row.append(b)
+
+        def put():
+            for value, b in buttons:
+                if value == self.s[key]:
+                    b.set_active(True)
+        self.setters.append(put)
+        return row
+
+    def slider(self, key, low, high, step):
+        scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, low, high, step)
+        scale.set_draw_value(True)
+        scale.connect("value-changed", lambda w: self.set(key, int(w.get_value())))
+        self.setters.append(lambda: scale.set_value(self.s[key]))
+        return scale
+
+    def refresh(self):
+        self.loading = True
+        for put in self.setters:
+            put()
+        self.loading = False
+
+    def set(self, key, value):
+        if self.loading or self.s.get(key) == value:
+            return
+        self.s[key] = value
+        self.save()
+
+    def save(self):
+        try:
+            with open(CONF, "w") as f:
+                json.dump(self.s, f, indent=2)
+        except OSError:
+            self.say(f"Cannot write {CONF}. Run once:\n"
+                     "sudo sh ~/.config/mango/vita/install.sh")
+
+    def check(self):
+        if subprocess.run(["systemctl", "is-active", "-q", "vita-stick"]).returncode:
+            self.say("The vita-stick service is not running. Run once:\n"
+                     "sudo sh ~/.config/mango/vita/install.sh")
+
+    def say(self, text):
+        self.warn.set_text(text)
+        self.warn.set_visible(True)
+
+    def defaults(self, _button):
+        self.s = dict(DEFAULTS)
+        self.refresh()
+        self.save()
+
+    def on_key(self, _ctl, keyval, _code, _state):
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        return False
+
+
+def on_activate(app):
+    win = app.get_active_window()
+    if win:
+        win.close()
+        return
+    load_css()
+    StickSettings(app)
+
+
+app = Gtk.Application(application_id="org.armbian.VitaStickSettings")
+app.connect("activate", on_activate)
+app.run(None)

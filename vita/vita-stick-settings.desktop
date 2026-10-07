@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Stick Mouse
+Comment=Sticks as a mouse: which stick points, speeds, on or off
+Exec=vita-stick-settings
+Icon=vita-stick-settings
+Categories=Settings;

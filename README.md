@@ -52,6 +52,8 @@ mmsg dispatch reload_config
 | START (hold) + d-pad ←/→ | Previous / next desktop |
 | L1 | On-screen keyboard |
 | R1 | Terminal |
+| SELECT (hold) + L1 | Screenshot of every screen (~/Pictures/Screenshots) |
+| SELECT (hold) + R1 | Screen recording start / stop (~/Videos) |
 | START (hold) + R1 | Files (Thunar) |
 | L2 (hold) + d-pad | Swap the window with the one on that side |
 | R2 | Controls cheat sheet (tap a row to run it) |
@@ -69,8 +71,8 @@ mmsg dispatch reload_config
 | L3 / R3 | Left / right click |
 | POWER | Power menu (screen off, suspend, reboot, shut down, log out); hold to power off |
 
-The sticks work as a mouse (`vita-stick`); `sudo systemctl stop vita-stick`
-hands them back to games.
+The sticks work as a mouse (`vita-stick`); Stick Mouse turns that off and swaps
+which stick points.
 "Toggle Pad-as-Keyboard" in the app menu turns the button remap off for games.
 
 ## Helpers (`vita/`)
@@ -87,6 +89,8 @@ hands them back to games.
 | `vita-bar`, `vita-bar-sensor` | Start mangobar with those settings; sensor readings for it |
 | `vita-scale` | Desktop scale: 2.0 / 1.75 bigger, 1.5 default, 1.25 / 1.0 more room |
 | `vita-stick` | The sticks as a mouse: left moves the pointer, right scrolls, L3 / R3 click (service) |
+| `vita-stick-settings` | Stick Mouse: on / off, which stick points, speeds |
+| `vita-capture` | Screenshot, and screen recording with wf-recorder (sound: system, mic or off) |
 | `vita-rofi` | Opens the app menu on the focused screen, closing one left open |
 | `vita-wireless` | Wireless on/off (Airplane mode): Wi-Fi and Bluetooth off, or back as they were |
 | `vita-leds` | Stick rings as a status light: charging, plugged in, low battery (service) |
