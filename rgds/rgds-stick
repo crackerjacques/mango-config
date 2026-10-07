@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-# RG DS: the sticks as a mouse. 
+# RG DS: the sticks as a mouse - one moves the pointer, the other scrolls,
+# their clicks are left / right (the pointer stick's is left). Set up in
+# /etc/rgds-stick.json by rgds-stick-settings; read again whenever it changes.
 
+import json
 import math
+import os
 import select
 import time
 
@@ -9,18 +13,51 @@ import evdev
 from evdev import ecodes as e, UInput
 
 NAME = "rgds-stick"
-DEADZONE = 0.12
-SPEED = 1200
-SCROLL = 25
+CONF = "/etc/rgds-stick.json"
+DEFAULTS = {
+    "enabled": True,
+    "swap": False,         # pointer on the right stick, scroll on the left
+    "speed": 1200,         # pointer, px per second at full tilt
+    "scroll": 25,          # wheel notches per second at full tilt
+    "horizontal": True,    # sideways tilt of the scroll stick scrolls sideways
+    "deadzone": 0.12,
+}
 TICK = 0.01
-CLICK = {e.BTN_THUMBL: e.BTN_LEFT, e.BTN_THUMBR: e.BTN_RIGHT}
-AXES = (e.ABS_X, e.ABS_Y, e.ABS_RX, e.ABS_RY)
+LEFT_STICK, RIGHT_STICK = (e.ABS_X, e.ABS_Y), (e.ABS_RX, e.ABS_RY)
+AXES = LEFT_STICK + RIGHT_STICK
+# the RG DS reports both sticks' up as larger values
 FLIP = {e.ABS_Y, e.ABS_RY}
+
+class Settings:
+    def __init__(self):
+        self.mtime = None
+        self.s = dict(DEFAULTS)
+
+    def poll(self):
+        """Reload when the file changed; a half-written file keeps the old."""
+        try:
+            mtime = os.stat(CONF).st_mtime
+        except OSError:
+            mtime = None
+        if mtime == self.mtime:
+            return
+        self.mtime = mtime
+        try:
+            with open(CONF) as f:
+                s = {**DEFAULTS, **json.load(f)}
+            for key, default in DEFAULTS.items():
+                s[key] = type(default)(s[key])
+        except (OSError, ValueError, TypeError):
+            return
+        self.s = s
+
+    def __getitem__(self, key):
+        return self.s[key]
 
 
 def find():
     """The stick device (all four axes, no buttons, so not a USB pad) and
-    the one carrying the click buttons."""
+    the one carrying the stick clicks."""
     stick = buttons = None
     for path in evdev.list_devices():
         try:
@@ -30,28 +67,30 @@ def find():
         caps = d.capabilities()
         axes = {a[0] if isinstance(a, tuple) else a for a in caps.get(e.EV_ABS, [])}
         keys = set(caps.get(e.EV_KEY, []))
+        clicks = {e.BTN_THUMBL, e.BTN_THUMBR}
         if d.name != NAME and not stick and set(AXES) <= axes and not keys:
             stick = d
-        elif d.name != NAME and not buttons and set(CLICK) & keys and not axes:
+        elif d.name != NAME and not buttons and clicks & keys and not axes:
             buttons = d
         else:
             d.close()
     return stick, buttons
 
 
-def curve(x):
+def curve(x, dz):
     """Dead zone, then squared so small tilts are fine-grained."""
     a = abs(x)
-    if a < DEADZONE:
+    if a < dz:
         return 0.0
-    t = min(1.0, (a - DEADZONE) / (1 - DEADZONE))
+    t = min(1.0, (a - dz) / (1 - dz))
     return math.copysign(t * t, x)
 
 
 ui = UInput({e.EV_REL: [e.REL_X, e.REL_Y, e.REL_WHEEL, e.REL_HWHEEL,
                         e.REL_WHEEL_HI_RES, e.REL_HWHEEL_HI_RES],
-             e.EV_KEY: sorted(CLICK.values())}, name=NAME)
+             e.EV_KEY: [e.BTN_LEFT, e.BTN_RIGHT]}, name=NAME)
 
+settings = Settings()
 stick = buttons = None
 centre, half = {}, {}
 pos = {a: 0.0 for a in AXES}     # -1 .. 1
@@ -71,7 +110,14 @@ while True:
             half[a] = (info.max - info.min) / 2 or 1
             pos[a] = 0.0
 
-    moving = any(curve(pos[a]) for a in AXES)
+    settings.poll()
+    on, dz = settings["enabled"], settings["deadzone"]
+    point, scroll = (RIGHT_STICK, LEFT_STICK) if settings["swap"] else (LEFT_STICK, RIGHT_STICK)
+    # the pointer stick's click is the left button
+    click = ({e.BTN_THUMBR: e.BTN_LEFT, e.BTN_THUMBL: e.BTN_RIGHT} if settings["swap"]
+             else {e.BTN_THUMBL: e.BTN_LEFT, e.BTN_THUMBR: e.BTN_RIGHT})
+
+    moving = on and any(curve(pos[a], dz) for a in AXES)
     fds = [d for d in (stick, buttons) if d]
     r, _, _ = select.select(fds, [], [], TICK if moving else None)
     try:
@@ -82,10 +128,13 @@ while True:
                     if ev.code in FLIP:
                         v = -v
                     pos[ev.code] = max(-1.0, min(1.0, v))
-                elif ev.type == e.EV_KEY and ev.code in CLICK and ev.value in (0, 1):
-                    ui.write(e.EV_KEY, CLICK[ev.code], ev.value)
+                # a release always goes out, so turning off mid-click
+                # leaves no button stuck down
+                elif (ev.type == e.EV_KEY and ev.code in click
+                      and (ev.value == 0 or (on and ev.value == 1))):
+                    ui.write(e.EV_KEY, click[ev.code], ev.value)
                     ui.syn()
-    except OSError:
+    except OSError:  # a device went away; look again
         stick = buttons = None
         continue
 
@@ -93,10 +142,13 @@ while True:
     dt, last = min(now - last, 0.05), now
     if not moving:
         continue
-    rest[e.REL_X] += curve(pos[e.ABS_X]) * SPEED * dt
-    rest[e.REL_Y] += curve(pos[e.ABS_Y]) * SPEED * dt
-    rest[e.REL_WHEEL_HI_RES] -= curve(pos[e.ABS_RY]) * SCROLL * 120 * dt
-    rest[e.REL_HWHEEL_HI_RES] += curve(pos[e.ABS_RX]) * SCROLL * 120 * dt
+    speed, notches = settings["speed"], settings["scroll"]
+    rest[e.REL_X] += curve(pos[point[0]], dz) * speed * dt
+    rest[e.REL_Y] += curve(pos[point[1]], dz) * speed * dt
+    # stick up scrolls up; 120 hi-res units make one wheel notch
+    rest[e.REL_WHEEL_HI_RES] -= curve(pos[scroll[1]], dz) * notches * 120 * dt
+    if settings["horizontal"]:
+        rest[e.REL_HWHEEL_HI_RES] += curve(pos[scroll[0]], dz) * notches * 120 * dt
     sent = False
     for code, value in rest.items():
         step = int(value)
