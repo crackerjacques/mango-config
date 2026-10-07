@@ -73,7 +73,6 @@ class Settings:
                 s = {**DEFAULTS, **json.load(f)}
         except (OSError, ValueError, TypeError):
             return
-        # the file is the user's: keep each value the type the loop expects
         for key, default in DEFAULTS.items():
             try:
                 s[key] = type(default)(s[key])
@@ -101,9 +100,7 @@ def battery():
             continue
         if status == "Charging":
             return "charging", pct
-        if status == "Full" or (online and pct >= 100):
-            return "full", pct
-        if online:
+        if online or status == "Not charging":
             return "full", pct
         return "battery", pct
     return None
