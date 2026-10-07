@@ -17,7 +17,6 @@ scale slider { min-width: 28px; min-height: 28px; border-radius: 14px; backgroun
 scale:focus slider { outline: 3px solid #d1b88e; outline-offset: 2px; }
 """
 
-
 def load_css():
     provider = Gtk.CssProvider()
     if hasattr(provider, "load_from_string"):
@@ -27,7 +26,6 @@ def load_css():
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
                                               Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-
 def current():
     # brightnessctl -m: device,class,current,percent%,max
     try:
@@ -35,7 +33,6 @@ def current():
         return int(out.split(",")[3].rstrip("%\n"))
     except (OSError, IndexError, ValueError):
         return 50
-
 
 class Brightness(Gtk.ApplicationWindow):
     def __init__(self, app):
@@ -76,7 +73,6 @@ class Brightness(Gtk.ApplicationWindow):
             return True
         return False
 
-
 def on_activate(app):
     win = app.get_active_window()
     if win:  # launched again: close it
@@ -84,7 +80,6 @@ def on_activate(app):
         return
     load_css()
     Brightness(app)
-
 
 app = Gtk.Application(application_id="org.armbian.RotateBrightness")
 app.connect("activate", on_activate)

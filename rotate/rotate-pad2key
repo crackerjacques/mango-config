@@ -70,9 +70,9 @@ ui = UInput({e.EV_KEY: sorted(_keys)}, name="rotate-pad2key")
 
 held = {}
 
-home_down = False  # HOME is held
-home_used = False  # a d-pad press went with it, so no Alt+Tab when let go
-swallowed = set()  # d-pad presses taken by HOME; their releases go too
+home_down = False
+home_used = False
+swallowed = set()
 
 def tap(seq):
     for k in seq: ui.write(e.EV_KEY, k, 1)

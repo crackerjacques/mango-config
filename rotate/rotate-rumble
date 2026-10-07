@@ -11,14 +11,12 @@ from evdev import ecodes as e, ff
 
 STATE = "/run/rotate-rumble.charger"
 
-
 def read(path):
     try:
         with open(path) as f:
             return f.read().strip()
     except OSError:
         return ""
-
 
 def vibrator():
     for path in evdev.list_devices():
@@ -30,7 +28,6 @@ def vibrator():
             return dev
         dev.close()
     return None
-
 
 def buzz(ms):
     dev = vibrator()
@@ -44,20 +41,17 @@ def buzz(ms):
     dev.erase_effect(eid)
     dev.close()
 
-
 def charger_online():
     for p in glob.glob("/sys/class/power_supply/*"):
         if read(f"{p}/type") != "Battery" and read(f"{p}/online") == "1":
             return True
     return False
 
-
 def plugged():
     """Buzz on the change from no charger to charger. The first call after
     boot only notes the state, so booting on the charger stays quiet."""
     now = "1" if charger_online() else "0"
     with open(STATE, "a+") as f:
-        # udev sends several changes at once (charger and battery)
         fcntl.flock(f, fcntl.LOCK_EX)
         f.seek(0)
         before = f.read().strip()
@@ -66,7 +60,6 @@ def plugged():
         f.write(now)
     if before == "0" and now == "1":
         buzz(120)
-
 
 if len(sys.argv) > 1 and sys.argv[1] == "--plugged":
     plugged()
