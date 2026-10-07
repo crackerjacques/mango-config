@@ -15,6 +15,7 @@ SCROLL = 25
 TICK = 0.01
 CLICK = {e.BTN_THUMBL: e.BTN_LEFT, e.BTN_THUMBR: e.BTN_RIGHT}
 AXES = (e.ABS_X, e.ABS_Y, e.ABS_RX, e.ABS_RY)
+FLIP = {e.ABS_Y, e.ABS_RY}
 
 
 def find():
@@ -77,7 +78,10 @@ while True:
         for d in r:
             for ev in d.read():
                 if ev.type == e.EV_ABS and ev.code in pos:
-                    pos[ev.code] = max(-1.0, min(1.0, (ev.value - centre[ev.code]) / half[ev.code]))
+                    v = (ev.value - centre[ev.code]) / half[ev.code]
+                    if ev.code in FLIP:
+                        v = -v
+                    pos[ev.code] = max(-1.0, min(1.0, v))
                 elif ev.type == e.EV_KEY and ev.code in CLICK and ev.value in (0, 1):
                     ui.write(e.EV_KEY, CLICK[ev.code], ev.value)
                     ui.syn()
