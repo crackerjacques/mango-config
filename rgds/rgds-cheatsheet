@@ -33,6 +33,7 @@ ROWS = [
     ("Left stick", "Mouse pointer", None),
     ("Right stick", "Scroll", None),
     ("", "Stick mouse settings", ["rgds-stick-settings"]),
+    ("", "Game mode (hold HOME 2 s to come back)", ["rgds-gamemode"]),
     ("HOME/Return", "Left / right click", None),
     ("POWER", "Power menu", ["rgds-logout"]),
     ("", "Brightness", ["rgds-brightness"]),

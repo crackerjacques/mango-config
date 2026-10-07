@@ -13,6 +13,7 @@ from evdev import ecodes as e, UInput
 
 NAME = "rgds-stick"
 CONF = "/etc/rgds-stick.json"
+GAME = "/run/rgds-gamemode"
 DEFAULTS = {
     "enabled": True,
     "swap": False,
@@ -51,6 +52,14 @@ class Settings:
 
     def __getitem__(self, key):
         return self.s[key]
+
+
+def game_mode():
+    try:
+        with open(GAME) as f:
+            return f.read().strip() == "1"
+    except OSError:
+        return False
 
 
 def find():
@@ -109,7 +118,7 @@ while True:
             pos[a] = 0.0
 
     settings.poll()
-    on, dz = settings["enabled"], settings["deadzone"]
+    on, dz = settings["enabled"] and not game_mode(), settings["deadzone"]
     point, scroll = (RIGHT_STICK, LEFT_STICK) if settings["swap"] else (LEFT_STICK, RIGHT_STICK)
     click = ({e.BTN_THUMBR: e.BTN_LEFT, e.BTN_THUMBL: e.BTN_RIGHT} if settings["swap"]
              else {e.BTN_THUMBL: e.BTN_LEFT, e.BTN_THUMBR: e.BTN_RIGHT})

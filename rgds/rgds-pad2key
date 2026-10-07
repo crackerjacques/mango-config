@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # RG DS: gamepad/HOME buttons -> keyboard keys (evdev/uinput).
 
-import time, select, evdev
+import glob, os, pwd, select, subprocess, time, evdev
 from evdev import ecodes as e, UInput
 
 
@@ -33,6 +33,9 @@ HOME_DPAD = {
     e.BTN_DPAD_LEFT:  (e.KEY_LEFTMETA, e.KEY_LEFTCTRL, e.KEY_LEFT),
     e.BTN_DPAD_RIGHT: (e.KEY_LEFTMETA, e.KEY_LEFTCTRL, e.KEY_RIGHT),
 }
+
+GAME = "/run/rgds-gamemode"
+HOLD_BACK = 2.0
 ALL = set(MAP) | set(COMBO) | set(HOLD) | {HOME}
 PAD = {c for c in ALL if c != e.KEY_HOME}
 
@@ -71,6 +74,48 @@ home_down = False
 home_used = False
 swallowed = set()
 
+in_game = False
+home_since = None
+
+
+def game_mode():
+    try:
+        with open(GAME) as f:
+            return f.read().strip() == "1"
+    except OSError:
+        return False
+
+
+def set_game(on):
+    with open(GAME, "w") as f:
+        f.write("1\n" if on else "0\n")
+
+
+def notify(msg):
+    """This runs as root: reach the logged-in users' session buses."""
+    for bus in glob.glob("/run/user/*/bus"):
+        try:
+            user = pwd.getpwuid(int(bus.split("/")[3])).pw_name
+        except (KeyError, ValueError):
+            continue
+        subprocess.Popen(["runuser", "-u", user, "--", "env",
+                          f"DBUS_SESSION_BUS_ADDRESS=unix:path={bus}",
+                          "notify-send", "-a", "Game mode", "-t", "3000", msg],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def release_all():
+    for keys in held.values():
+        for k in keys:
+            ui.write(e.EV_KEY, k, 0)
+        keys.clear()
+    ui.syn()
+
+
+set_game(False)
+os.chmod(GAME, 0o666)
+
+
 def tap(seq):
     for k in seq: ui.write(e.EV_KEY, k, 1)
     for k in reversed(seq): ui.write(e.EV_KEY, k, 0)
@@ -90,7 +135,24 @@ while True:
         if not devs:
             time.sleep(2)
             continue
-    r, _, _ = select.select(devs, [], [])
+    timeout = None
+    if home_since is not None:
+        timeout = max(0.0, home_since + HOLD_BACK - time.monotonic())
+    r, _, _ = select.select(devs, [], [], timeout)
+
+    game = game_mode()
+    if game != in_game:
+        in_game = game
+        if game:
+            release_all()
+            home_down, swallowed = False, set()
+        home_since = None
+    if in_game and home_since is not None and time.monotonic() - home_since >= HOLD_BACK:
+        set_game(False)
+        in_game, home_since = False, None
+        # HOME is still down: its release must not switch windows
+        home_down, home_used = True, True
+        notify("Game mode off: the buttons and sticks drive the desktop again")
     for fd in r:
         try:
             events = list(devs[fd].read())
@@ -99,6 +161,12 @@ while True:
             continue
         for ev in events:
             if ev.type != e.EV_KEY:
+                continue
+            if in_game:
+                if ev.code == HOME and ev.value == 1:
+                    home_since = time.monotonic()
+                elif ev.code == HOME and ev.value == 0:
+                    home_since = None
                 continue
             if ev.code == HOME:
                 if ev.value == 1:
