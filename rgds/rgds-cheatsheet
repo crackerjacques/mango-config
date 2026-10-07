@@ -32,7 +32,6 @@ ROWS = [
     ("D-pad", "Arrow keys", None),
     ("Left stick", "Mouse pointer", None),
     ("Right stick", "Scroll", None),
-    ("", "Swap the sticks (pointer / scroll)", ["rgds-stick-swap"]),
     ("", "Stick mouse settings", ["rgds-stick-settings"]),
     ("HOME/Return", "Left / right click", None),
     ("POWER", "Power menu", ["rgds-logout"]),

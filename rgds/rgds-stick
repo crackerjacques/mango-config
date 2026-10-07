@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # RG DS: the sticks as a mouse - one moves the pointer, the other scrolls,
-# their clicks are left / right (the pointer stick's is left). Set up in
-# /etc/rgds-stick.json by rgds-stick-settings; read again whenever it changes.
+# their clicks are left / right (the pointer stick's is left).
 
 import json
 import math
@@ -16,16 +15,15 @@ NAME = "rgds-stick"
 CONF = "/etc/rgds-stick.json"
 DEFAULTS = {
     "enabled": True,
-    "swap": False,         # pointer on the right stick, scroll on the left
-    "speed": 1200,         # pointer, px per second at full tilt
-    "scroll": 25,          # wheel notches per second at full tilt
-    "horizontal": True,    # sideways tilt of the scroll stick scrolls sideways
+    "swap": False,
+    "speed": 1200,
+    "scroll": 25,
+    "horizontal": True,
     "deadzone": 0.12,
 }
 TICK = 0.01
 LEFT_STICK, RIGHT_STICK = (e.ABS_X, e.ABS_Y), (e.ABS_RX, e.ABS_RY)
 AXES = LEFT_STICK + RIGHT_STICK
-# the RG DS reports both sticks' up as larger values
 FLIP = {e.ABS_Y, e.ABS_RY}
 
 class Settings:
@@ -113,7 +111,6 @@ while True:
     settings.poll()
     on, dz = settings["enabled"], settings["deadzone"]
     point, scroll = (RIGHT_STICK, LEFT_STICK) if settings["swap"] else (LEFT_STICK, RIGHT_STICK)
-    # the pointer stick's click is the left button
     click = ({e.BTN_THUMBR: e.BTN_LEFT, e.BTN_THUMBL: e.BTN_RIGHT} if settings["swap"]
              else {e.BTN_THUMBL: e.BTN_LEFT, e.BTN_THUMBR: e.BTN_RIGHT})
 
@@ -128,13 +125,12 @@ while True:
                     if ev.code in FLIP:
                         v = -v
                     pos[ev.code] = max(-1.0, min(1.0, v))
-                # a release always goes out, so turning off mid-click
-                # leaves no button stuck down
+
                 elif (ev.type == e.EV_KEY and ev.code in click
                       and (ev.value == 0 or (on and ev.value == 1))):
                     ui.write(e.EV_KEY, click[ev.code], ev.value)
                     ui.syn()
-    except OSError:  # a device went away; look again
+    except OSError:
         stick = buttons = None
         continue
 
@@ -145,7 +141,6 @@ while True:
     speed, notches = settings["speed"], settings["scroll"]
     rest[e.REL_X] += curve(pos[point[0]], dz) * speed * dt
     rest[e.REL_Y] += curve(pos[point[1]], dz) * speed * dt
-    # stick up scrolls up; 120 hi-res units make one wheel notch
     rest[e.REL_WHEEL_HI_RES] -= curve(pos[scroll[1]], dz) * notches * 120 * dt
     if settings["horizontal"]:
         rest[e.REL_HWHEEL_HI_RES] += curve(pos[scroll[0]], dz) * notches * 120 * dt

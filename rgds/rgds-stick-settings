@@ -34,7 +34,7 @@ scale slider { min-width: 24px; min-height: 24px; border-radius: 12px; backgroun
 
 def load_css():
     provider = Gtk.CssProvider()
-    if hasattr(provider, "load_from_string"):  # GTK >= 4.12
+    if hasattr(provider, "load_from_string"):
         provider.load_from_string(CSS)
     else:
         provider.load_from_data(CSS, -1)
@@ -62,7 +62,7 @@ class StickSettings(Gtk.ApplicationWindow):
         self.set_default_size(520, -1)
         self.s = load()
         self.loading = False
-        self.setters = []  # put the current settings back on the widgets
+        self.setters = []
 
         keys = Gtk.EventControllerKey()
         keys.connect("key-pressed", self.on_key)
