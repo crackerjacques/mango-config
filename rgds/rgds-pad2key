@@ -18,7 +18,6 @@ MAP = {
 }
 
 COMBO = {
-    e.BTN_MODE:   (e.KEY_LEFTALT,   e.KEY_TAB),
     e.BTN_NORTH:  (e.KEY_LEFTCTRL,  e.KEY_F4),
     e.BTN_THUMBL: (e.KEY_LEFTSHIFT, e.KEY_TAB),
     e.BTN_TR2:    (e.KEY_LEFTMETA,  e.KEY_F1),
@@ -29,7 +28,14 @@ COMBO = {
 HOLD = {
     e.BTN_TL2:    (e.KEY_LEFTMETA,  e.KEY_LEFTSHIFT),
 }
-ALL = set(MAP) | set(COMBO) | set(HOLD)
+
+HOME = e.BTN_MODE
+HOME_TAP = (e.KEY_LEFTALT, e.KEY_TAB)
+HOME_DPAD = {
+    e.BTN_DPAD_LEFT:  (e.KEY_LEFTMETA, e.KEY_LEFTCTRL, e.KEY_LEFT),
+    e.BTN_DPAD_RIGHT: (e.KEY_LEFTMETA, e.KEY_LEFTCTRL, e.KEY_RIGHT),
+}
+ALL = set(MAP) | set(COMBO) | set(HOLD) | {HOME}
 PAD = {c for c in ALL if c != e.KEY_HOME}
 
 def sources():
@@ -56,12 +62,16 @@ while not devs:
         time.sleep(2)
 
 _keys = set(MAP.values())
-for _seq in list(COMBO.values()) + list(HOLD.values()):
+for _seq in list(COMBO.values()) + list(HOLD.values()) + [HOME_TAP] + list(HOME_DPAD.values()):
     _keys.update(_seq)
 
 ui = UInput({e.EV_KEY: sorted(_keys)}, name="rgds-pad2key")
 
 held = {}
+
+home_down = False  # HOME is held
+home_used = False  # a d-pad press went with it, so no Alt+Tab when let go
+swallowed = set()  # d-pad presses taken by HOME; their releases go too
 
 def tap(seq):
     for k in seq: ui.write(e.EV_KEY, k, 1)
@@ -92,6 +102,24 @@ while True:
         for ev in events:
             if ev.type != e.EV_KEY:
                 continue
+            if ev.code == HOME:
+                if ev.value == 1:
+                    home_down, home_used = True, False
+                elif ev.value == 0:
+                    home_down = False
+                    if not home_used:
+                        tap(HOME_TAP)
+                continue
+            if ev.code in HOME_DPAD:
+                if ev.value == 1 and home_down:
+                    home_used = True
+                    swallowed.add(ev.code)
+                    tap(HOME_DPAD[ev.code])
+                    continue
+                if ev.code in swallowed:
+                    if ev.value == 0:
+                        swallowed.discard(ev.code)
+                    continue
             if ev.code in COMBO:
                 if ev.value == 1:
                     tap(COMBO[ev.code])
