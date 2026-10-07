@@ -64,10 +64,13 @@ mmsg dispatch reload_config
 | A / B | Enter / Esc |
 | Y | Backspace |
 | D-pad | Arrow keys |
-| L3 / R3 | Shift+Tab / Tab |
+| Left stick | Mouse pointer |
+| Right stick | Scroll |
+| L3 / R3 | Left / right click |
 | POWER | Power menu (screen off, suspend, reboot, shut down, log out); hold to power off |
 
-The analog sticks are left alone and always work as a gamepad.
+The sticks work as a mouse (`vita-stick`); `sudo systemctl stop vita-stick`
+hands them back to games.
 "Toggle Pad-as-Keyboard" in the app menu turns the button remap off for games.
 
 ## Helpers (`vita/`)
@@ -83,6 +86,7 @@ The analog sticks are left alone and always work as a gamepad.
 | `vita-bar-settings` | mangobar theme, shape and contents, for the panel and an external screen |
 | `vita-bar`, `vita-bar-sensor` | Start mangobar with those settings; sensor readings for it |
 | `vita-scale` | Desktop scale: 2.0 / 1.75 bigger, 1.5 default, 1.25 / 1.0 more room |
+| `vita-stick` | The sticks as a mouse: left moves the pointer, right scrolls, L3 / R3 click (service) |
 | `vita-rofi` | Opens the app menu on the focused screen, closing one left open |
 | `vita-wireless` | Wireless on/off (Airplane mode): Wi-Fi and Bluetooth off, or back as they were |
 | `vita-leds` | Stick rings as a status light: charging, plugged in, low battery (service) |
