@@ -29,7 +29,6 @@ button:hover, button:active { background: #ac9259; }
 button:hover label, button:active label { color: #201b14; }
 """
 
-
 def load_css():
     provider = Gtk.CssProvider()
     if hasattr(provider, "load_from_string"):
@@ -38,7 +37,6 @@ def load_css():
         provider.load_from_data(CSS, -1)
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
                                               Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-
 
 class PowerMenu(Gtk.ApplicationWindow):
     def __init__(self, app):
@@ -72,15 +70,13 @@ class PowerMenu(Gtk.ApplicationWindow):
         self.close()
         subprocess.Popen(cmd, start_new_session=True)
 
-
 def on_activate(app):
     win = app.get_active_window()
-    if win:  # second launch: toggle the open menu shut
+    if win:
         win.close()
         return
     load_css()
     PowerMenu(app)
-
 
 if os.path.exists(SCREENOFF):
     subprocess.run(["rgds-screenoff", "wake"])

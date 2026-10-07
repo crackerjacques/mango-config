@@ -31,7 +31,6 @@ scale highlight { border-radius: 5px; background: #ac9259; }
 scale slider { min-width: 24px; min-height: 24px; border-radius: 12px; background: #d1b88e; }
 """
 
-
 def load_css():
     provider = Gtk.CssProvider()
     if hasattr(provider, "load_from_string"):
@@ -49,12 +48,10 @@ def load():
     except (OSError, ValueError):
         return dict(DEFAULTS)
 
-
 def head(text):
     label = Gtk.Label(label=text, xalign=0)
     label.add_css_class("head")
     return label
-
 
 class StickSettings(Gtk.ApplicationWindow):
     def __init__(self, app):
@@ -182,7 +179,6 @@ class StickSettings(Gtk.ApplicationWindow):
             return True
         return False
 
-
 def on_activate(app):
     win = app.get_active_window()
     if win:
@@ -190,7 +186,6 @@ def on_activate(app):
         return
     load_css()
     StickSettings(app)
-
 
 app = Gtk.Application(application_id="org.armbian.RgdsStickSettings")
 app.connect("activate", on_activate)

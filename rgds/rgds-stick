@@ -53,14 +53,12 @@ class Settings:
     def __getitem__(self, key):
         return self.s[key]
 
-
 def game_mode():
     try:
         with open(GAME) as f:
             return f.read().strip() == "1"
     except OSError:
         return False
-
 
 def find():
     """The stick device (all four axes, no buttons, so not a USB pad) and
@@ -83,7 +81,6 @@ def find():
             d.close()
     return stick, buttons
 
-
 def curve(x, dz):
     """Dead zone, then squared so small tilts are fine-grained."""
     a = abs(x)
@@ -91,7 +88,6 @@ def curve(x, dz):
         return 0.0
     t = min(1.0, (a - dz) / (1 - dz))
     return math.copysign(t * t, x)
-
 
 ui = UInput({e.EV_REL: [e.REL_X, e.REL_Y, e.REL_WHEEL, e.REL_HWHEEL,
                         e.REL_WHEEL_HI_RES, e.REL_HWHEEL_HI_RES],

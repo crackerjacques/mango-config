@@ -5,7 +5,6 @@ find_headless_display() {
     wlr-randr --json | jq -r '.[] | select(.name | startswith("HEADLESS-")) | .name' | head -n 1
 }
 
-# Get the first HEADLESS display
 HEADLESS_DISPLAY=$(find_headless_display)
 
 if [ -z "$HEADLESS_DISPLAY" ]; then

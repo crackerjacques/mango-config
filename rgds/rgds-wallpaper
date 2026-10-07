@@ -49,11 +49,9 @@ def load_css():
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
                                               Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-
 def current(screen):
     mine = os.path.join(CONF, screen)
     return mine if os.path.exists(mine) else os.path.join(DEFAULTS, screen + ".png")
-
 
 def current_mode(screen):
     try:
@@ -63,16 +61,13 @@ def current_mode(screen):
         mode = ""
     return mode if mode in [m for m, _, _ in MODES] else "fill"
 
-
 def apply():
     subprocess.Popen(["sh", APPLY], start_new_session=True,
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-
 def start_folder():
     pics = os.path.expanduser("~/Pictures")
     return pics if os.path.isdir(pics) else os.path.expanduser("~")
-
 
 class Wallpaper(Gtk.ApplicationWindow):
     def __init__(self, app):
@@ -153,7 +148,6 @@ class Wallpaper(Gtk.ApplicationWindow):
         self.pictures[screen].set_filename(dest)
         apply()
 
-
 def on_activate(app):
     win = app.get_active_window()
     if win:
@@ -161,7 +155,6 @@ def on_activate(app):
         return
     load_css()
     Wallpaper(app)
-
 
 app = Gtk.Application(application_id="org.armbian.RgdsWallpaper")
 app.connect("activate", on_activate)

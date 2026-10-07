@@ -6,7 +6,6 @@ from evdev import UInput
 
 PANELS = {"fe5c0000": "rgds-touch-top", "fe5e0000": "rgds-touch-bottom"}
 
-
 def open_panels(skip):
     out = {}
     for ctl, name in PANELS.items():
@@ -26,13 +25,11 @@ def open_panels(skip):
             out[dev.fd] = (dev, ui)
     return out
 
-
 def close(pair):
     dev, ui = pair
     for f in (dev.ungrab, dev.close, ui.close):
         try: f()
         except Exception: pass
-
 
 # Run with whichever panels are there and keep looking for a missing one, so
 # a panel that fails to probe does not take the other one down with it.

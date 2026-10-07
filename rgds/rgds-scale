@@ -25,10 +25,8 @@ button.apply { background: #ac9259; background-image: none; }
 button.apply label { color: #000000; font-weight: bold; }
 """
 
-
 def label_of(scale):
     return f"{scale:.2f}  -  {round(WIDTH / scale)}x{round(HEIGHT / scale)}"
-
 
 def current():
     """Scales from the rules file, 1.0 for a screen it does not mention."""
@@ -46,7 +44,6 @@ def current():
         pass
     return found
 
-
 def rules_for(scales):
     top = scales["top"]
     lines = ["# written by rgds-scale"]
@@ -59,7 +56,6 @@ def rules_for(scales):
             y = round(HEIGHT / top)
     return "\n".join(lines) + "\n"
 
-
 def write_rules(text):
     os.makedirs(CONF, exist_ok=True)
     if text is None:
@@ -71,7 +67,6 @@ def write_rules(text):
         with open(RULES, "w") as f:
             f.write(text)
     subprocess.run(["mmsg", "dispatch", "reload_config"])
-
 
 class Scale(Gtk.ApplicationWindow):
     def __init__(self, app):
@@ -173,7 +168,6 @@ class Scale(Gtk.ApplicationWindow):
             self.pending = None
         return False
 
-
 def on_activate(app):
     win = app.get_active_window()
     if win:
@@ -187,7 +181,6 @@ def on_activate(app):
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider,
                                               Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
     Scale(app)
-
 
 app = Gtk.Application(application_id="org.armbian.RgdsScale")
 app.connect("activate", on_activate)
