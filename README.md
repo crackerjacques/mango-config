@@ -57,7 +57,8 @@ mmsg dispatch reload_config
 | R2 | Controls cheat sheet (tap a row to run it) |
 | SELECT (hold) + d-pad | Focus the window on that side |
 | START (hold) + SELECT | Screen off - any button or touch wakes it |
-| HOME (one of the two) | Switch window |
+| HOME (one of the two) | Switch window (tap) |
+| HOME (the same one) + d-pad ←/→ | Send the window to the desktop that way |
 | HOME (the other) | Input method (fcitx5) on / off |
 | X | Close window |
 | A / B | Enter / Esc |
