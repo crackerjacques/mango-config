@@ -38,8 +38,16 @@ import json, sys
 print(next(m["name"] for m in json.load(sys.stdin)["monitors"] if m.get("active")))' 2>/dev/null)
 	[ -n "$out" ] && set -- "$@" -o "$out"
 	echo "$file" >"$last"
+	log=${XDG_RUNTIME_DIR:-/tmp}/vita-capture.log
 	wf-recorder "$@" -c libx264 -p preset=ultrafast -p crf=28 -x yuv420p -r 30 \
-		-f "$file" </dev/null >/dev/null 2>&1 &
+		-f "$file" </dev/null >"$log" 2>&1 &
+	pid=$!
+	# it fails straight away on a bad option or audio source: say why
+	sleep 1
+	if ! kill -0 "$pid" 2>/dev/null; then
+		say "Recording failed: $(grep -v '^$' "$log" | tail -n 1)"
+		exit 1
+	fi
 	say "Recording, sound: $sound. SELECT + R1 again to stop."
 	;;
 sound)
