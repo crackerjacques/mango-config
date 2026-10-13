@@ -16,6 +16,7 @@ install -D -m 755 rotate-lid-example /usr/share/rotate-lid/lid_example
 
 f=$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)/.config/rotate-scale/monitor.conf
 [ -f "$f" ] && sed -i 's/^monitorrule=/monitor_rule=/' "$f"
+[ -f "$f" ] && sed -i '/refresh:/!s/,width:[0-9]*,height:[0-9]*//' "$f"
 
 install -m 644 99-rotate-rumble.rules /etc/udev/rules.d/
 udevadm control --reload
