@@ -50,7 +50,7 @@ def rules_for(scales):
     y = 0
     for key, _, output in SCREENS:
         s = scales[key]
-        lines.append(f"monitor_rule=name:^{output}$,width:{WIDTH},height:{HEIGHT},"
+        lines.append(f"monitor_rule=name:^{output}$,"
                      f"x:0,y:{y},scale:{s:.6f}" + (",primary:1" if key == "top" else ""))
         if key == "top":
             y = round(HEIGHT / top)

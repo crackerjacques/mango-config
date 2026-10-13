@@ -19,6 +19,7 @@ printf '[Desktop Entry]\nType=Application\nName=Toggle Pad-as-Keyboard\nHidden=t
 
 f=$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)/.config/rgds-scale/monitor.conf
 [ -f "$f" ] && sed -i 's/^monitorrule=/monitor_rule=/' "$f"
+[ -f "$f" ] && sed -i '/refresh:/!s/,width:[0-9]*,height:[0-9]*//' "$f"
 
 install -m 644 99-rgds-rumble.rules /etc/udev/rules.d/
 udevadm control --reload
