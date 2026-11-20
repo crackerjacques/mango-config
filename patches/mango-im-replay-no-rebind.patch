@@ -1,8 +1,8 @@
 diff --git a/src/input/keyboard.c b/src/input/keyboard.c
-index 12545f4..9eedc57 100644
+index 1066a99f..d0fda288 100644
 --- a/src/input/keyboard.c
 +++ b/src/input/keyboard.c
-@@ -709,14 +709,25 @@ void handle_keyboard_key(struct wl_listener *listener, void *data) {
+@@ -772,14 +772,25 @@ void handle_keyboard_key(struct wl_listener *listener, void *data) {
  		pointer_hide_cursor(NULL);
  	}
  
@@ -28,5 +28,5 @@ index 12545f4..9eedc57 100644
 -	for (i = 0; i < nsyms; i++)
 +	for (i = 0; i < nsyms && !im_replay; i++)
  		handled = keyboard_check_keybinding(event->state, server.session_locked,
- 											mods, syms[i], keycode) ||
+ 											mods, syms[i], keycode, false) ||
  				  handled;

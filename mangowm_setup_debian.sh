@@ -97,7 +97,11 @@ step_mango() {
 	fetch https://github.com/mangowm/mango.git mango
 	curl -fsSL -o "$SRC/mango-im-replay-no-rebind.patch" \
 		"$RAW/patches/mango-im-replay-no-rebind.patch"
-	git -C "$SRC/mango" apply "$SRC/mango-im-replay-no-rebind.patch"
+	# upstream moves fast: if the patch no longer fits, build without it
+	# rather than stop (mango runs fine, only the IME fix is missing)
+	if ! git -C "$SRC/mango" apply "$SRC/mango-im-replay-no-rebind.patch"; then
+		echo "WARNING: the input method patch does not fit this mango; building without it" >&2
+	fi
 	build mango
 	sudo mkdir -p /usr/share/wayland-sessions
 	sudo ln -sf /usr/local/share/wayland-sessions/mango.desktop /usr/share/wayland-sessions/
